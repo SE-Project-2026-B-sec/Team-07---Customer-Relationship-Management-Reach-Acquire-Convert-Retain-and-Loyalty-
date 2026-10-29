@@ -11,7 +11,8 @@ const authorize =
   (req: Request, res: Response, next: NextFunction) =>
     req.user && roles.includes((req.user as { role: string }).role)
       ? next()
-      : res.status(403).json({ code: 'FORBIDDEN', message: 'You do not have permission' });import { contactsController as ctrl } from './contacts.controller';
+      : res.status(403).json({ code: 'FORBIDDEN', message: 'You do not have permission' });
+import { contactsController as ctrl } from './contacts.controller';
 import { createContactBody, listContactsQuery, updateContactBody } from './contacts.schema';
 
 const canRead = authorize('ADMIN', 'SALES_MANAGER', 'SALES_REP', 'SUPPORT');

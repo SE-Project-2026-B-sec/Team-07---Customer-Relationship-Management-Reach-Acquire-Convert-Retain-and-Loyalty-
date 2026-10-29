@@ -67,7 +67,9 @@ describe('Contacts (CRM-11)', () => {
     expect(list.body.items.map((c: { id: string }) => c.id)).not.toContain(id);
 
     expect((await request(app).get(`/api/v1/contacts/${id}`).set(rep2)).status).toBe(403);
-    expect((await request(app).patch(`/api/v1/contacts/${id}`).set(rep2).send({ city: 'X' })).status).toBe(403);
+    expect(
+      (await request(app).patch(`/api/v1/contacts/${id}`).set(rep2).send({ city: 'X' })).status,
+    ).toBe(403);
     expect((await request(app).delete(`/api/v1/contacts/${id}`).set(rep2)).status).toBe(403);
 
     await request(app).delete(`/api/v1/contacts/${id}`).set(rep);
@@ -82,7 +84,10 @@ describe('Contacts (CRM-11)', () => {
 
   it('returns 409 for a duplicate email, on create and on edit', async () => {
     const email = `dup${unique()}@example.com`;
-    const first = await request(app).post('/api/v1/contacts').set(rep).send({ name: 'First', email });
+    const first = await request(app)
+      .post('/api/v1/contacts')
+      .set(rep)
+      .send({ name: 'First', email });
     expect(first.status).toBe(201);
 
     const again = await request(app)
@@ -96,7 +101,10 @@ describe('Contacts (CRM-11)', () => {
       .post('/api/v1/contacts')
       .set(rep)
       .send({ name: 'Other', email: `other${unique()}@example.com` });
-    const clash = await request(app).patch(`/api/v1/contacts/${other.body.id}`).set(rep).send({ email });
+    const clash = await request(app)
+      .patch(`/api/v1/contacts/${other.body.id}`)
+      .set(rep)
+      .send({ email });
     expect(clash.status).toBe(409);
 
     await request(app).delete(`/api/v1/contacts/${first.body.id}`).set(rep);
@@ -112,7 +120,10 @@ describe('Contacts (CRM-11)', () => {
   });
 
   it('rejects an invalid body with 400', async () => {
-    const res = await request(app).post('/api/v1/contacts').set(rep).send({ name: '', email: 'nope' });
+    const res = await request(app)
+      .post('/api/v1/contacts')
+      .set(rep)
+      .send({ name: '', email: 'nope' });
     expect(res.status).toBe(400);
   });
 

@@ -14,7 +14,9 @@ const handle =
 
 export const contactsController = {
   list: handle(async (req, res) => {
-    res.json(await contactsService.list(currentUser(req), req.query as unknown as ListContactsQuery));
+    res.json(
+      await contactsService.list(currentUser(req), req.query as unknown as ListContactsQuery),
+    );
   }),
 
   get: handle(async (req, res) => {

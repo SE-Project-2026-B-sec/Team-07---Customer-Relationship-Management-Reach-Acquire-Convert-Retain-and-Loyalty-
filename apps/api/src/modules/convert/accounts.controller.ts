@@ -13,7 +13,9 @@ const handle =
 
 export const accountsController = {
   list: handle(async (req, res) => {
-    res.json(await accountsService.list(currentUser(req), req.query as unknown as ListAccountsQuery));
+    res.json(
+      await accountsService.list(currentUser(req), req.query as unknown as ListAccountsQuery),
+    );
   }),
 
   get: handle(async (req, res) => {

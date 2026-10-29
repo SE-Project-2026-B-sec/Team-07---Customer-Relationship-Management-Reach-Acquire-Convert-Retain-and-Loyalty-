@@ -23,8 +23,14 @@ export const accountsService = {
       ...(industry && { industry: { equals: industry, mode: 'insensitive' } }),
     };
     const skip = (page - 1) * pageSize;
-    const [rows, total] = await Promise.all([repo.findMany(where, skip, pageSize), repo.count(where)]);
-    const items = rows.map(({ _count, ...account }) => ({ ...account, contactCount: _count.contacts }));
+    const [rows, total] = await Promise.all([
+      repo.findMany(where, skip, pageSize),
+      repo.count(where),
+    ]);
+    const items = rows.map(({ _count, ...account }) => ({
+      ...account,
+      contactCount: _count.contacts,
+    }));
     return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
   },
 

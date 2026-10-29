@@ -6,7 +6,9 @@ const app = createApp();
 const unique = () => `${Date.now()}${Math.floor(Math.random() * 1e6)}`;
 
 async function auth(email: string) {
-  const res = await request(app).post('/api/v1/auth/login').send({ email, password: 'Password@123' });
+  const res = await request(app)
+    .post('/api/v1/auth/login')
+    .send({ email, password: 'Password@123' });
   return { Authorization: `Bearer ${res.body.token}` };
 }
 
@@ -32,7 +34,11 @@ describe('Accounts (CRM-11)', () => {
     await request(app)
       .post('/api/v1/contacts')
       .set(rep)
-      .send({ name: 'Acme Buyer', email: `buyer${unique()}@example.com`, accountId: created.body.id });
+      .send({
+        name: 'Acme Buyer',
+        email: `buyer${unique()}@example.com`,
+        accountId: created.body.id,
+      });
 
     const edited = await request(app)
       .patch(`/api/v1/accounts/${created.body.id}`)
@@ -40,7 +46,9 @@ describe('Accounts (CRM-11)', () => {
       .send({ industry: 'Wholesale' });
     expect(edited.body.industry).toBe('Wholesale');
 
-    const list = await request(app).get(`/api/v1/accounts?q=${encodeURIComponent(name)}`).set(rep);
+    const list = await request(app)
+      .get(`/api/v1/accounts?q=${encodeURIComponent(name)}`)
+      .set(rep);
     expect(list.status).toBe(200);
     expect(list.body.items[0].contactCount).toBe(1);
 
@@ -48,16 +56,27 @@ describe('Accounts (CRM-11)', () => {
     expect(detail.body.contacts).toHaveLength(1);
 
     // A rep can't delete an account; a manager can.
-    expect((await request(app).delete(`/api/v1/accounts/${created.body.id}`).set(rep)).status).toBe(403);
-    expect((await request(app).delete(`/api/v1/accounts/${created.body.id}`).set(manager)).status).toBe(204);
+    expect((await request(app).delete(`/api/v1/accounts/${created.body.id}`).set(rep)).status).toBe(
+      403,
+    );
+    expect(
+      (await request(app).delete(`/api/v1/accounts/${created.body.id}`).set(manager)).status,
+    ).toBe(204);
   });
 
   it("hides another rep's contacts on the account detail page", async () => {
-    const account = await request(app).post('/api/v1/accounts').set(rep).send({ name: `Shared ${unique()}` });
+    const account = await request(app)
+      .post('/api/v1/accounts')
+      .set(rep)
+      .send({ name: `Shared ${unique()}` });
     await request(app)
       .post('/api/v1/contacts')
       .set(rep)
-      .send({ name: 'Rep One Contact', email: `r1${unique()}@example.com`, accountId: account.body.id });
+      .send({
+        name: 'Rep One Contact',
+        email: `r1${unique()}@example.com`,
+        accountId: account.body.id,
+      });
 
     const asRep2 = await request(app).get(`/api/v1/accounts/${account.body.id}`).set(rep2);
     expect(asRep2.status).toBe(200);

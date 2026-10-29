@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import { accountsRouter } from './accounts.router';
+import { contactsRouter } from './contacts.router';
 
 /**
  * Convert module — CRM-11 contacts and accounts, CRM-13 convert lead (Disha);
@@ -7,3 +9,7 @@ import { Router } from 'express';
  *            POST /leads/:id/convert; POST /deals/:id/quote
  */
 export const convertRouter = Router();
+
+// CRM-11
+convertRouter.use('/contacts', contactsRouter);
+convertRouter.use('/accounts', accountsRouter);
