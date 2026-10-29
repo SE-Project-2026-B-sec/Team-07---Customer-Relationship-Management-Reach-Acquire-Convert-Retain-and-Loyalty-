@@ -1,0 +1,430 @@
+// CRM-RACRL database schema (see SAD section 3.3, class diagram, and SRS section 4).
+// Change it with: npx prisma migrate dev --name <what-changed>
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------- enums
+
+enum Role {
+  ADMIN
+  MARKETING
+  SALES_MANAGER
+  SALES_REP
+  SUPPORT
+}
+
+enum Channel {
+  EMAIL
+  SMS
+  SOCIAL
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  RUNNING
+  COMPLETED
+  ARCHIVED
+}
+
+enum CampaignEventType {
+  SENT
+  OPEN
+  CLICK
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  LOST
+}
+
+enum DealStage {
+  PROSPECTING
+  QUALIFIED
+  PROPOSAL
+  NEGOTIATION
+  WON
+  LOST
+}
+
+enum ActivityType {
+  TASK
+  CALL
+  MEETING
+  NOTE
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TierName {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+}
+
+enum LedgerReason {
+  EARN
+  REDEEM
+  REFERRAL
+  ADJUST
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+// ---------------------------------------------------------------- auth (CRM-F-001..003)
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  leads         Lead[]         @relation("LeadOwner")
+  contacts      Contact[]      @relation("ContactOwner")
+  deals         Deal[]         @relation("DealOwner")
+  activities    Activity[]
+  tickets       Ticket[]       @relation("TicketAssignee")
+  notifications Notification[]
+  auditLogs     AuditLog[]
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  message   String
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+}
+
+// ---------------------------------------------------------------- reach (CRM-F-010..012)
+
+model Segment {
+  id         String   @id @default(uuid())
+  name       String
+  // Filter rules, e.g. { "city": "Bengaluru", "tier": "GOLD", "tags": ["vip"] }
+  filterJson Json
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  campaigns Campaign[]
+}
+
+model Campaign {
+  id        String         @id @default(uuid())
+  name      String
+  channel   Channel
+  budget    Decimal        @db.Decimal(12, 2)
+  status    CampaignStatus @default(DRAFT)
+  startDate DateTime
+  endDate   DateTime
+  segmentId String?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  segment Segment?        @relation(fields: [segmentId], references: [id])
+  events  CampaignEvent[]
+  leads   Lead[]
+}
+
+model CampaignEvent {
+  id         String            @id @default(uuid())
+  campaignId String
+  contactId  String
+  type       CampaignEventType
+  occurredAt DateTime          @default(now())
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  contact  Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId, type])
+}
+
+// ---------------------------------------------------------------- acquire (CRM-F-020..023)
+
+model Lead {
+  id                 String     @id @default(uuid())
+  name               String
+  email              String
+  phone              String?
+  company            String?
+  source             String     @default("MANUAL") // WEB, MANUAL, IMPORT, REFERRAL, CAMPAIGN
+  status             LeadStatus @default(NEW)
+  score              Int        @default(0)
+  isDuplicate        Boolean    @default(false)
+  ownerId            String?
+  campaignId         String?
+  convertedContactId String?    @unique
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  owner            User?      @relation("LeadOwner", fields: [ownerId], references: [id])
+  campaign         Campaign?  @relation(fields: [campaignId], references: [id])
+  convertedContact Contact?   @relation(fields: [convertedContactId], references: [id])
+  activities       Activity[]
+
+  @@index([email])
+  @@index([ownerId])
+  @@index([status])
+}
+
+model LeadScoreRule {
+  id        String  @id @default(uuid())
+  field     String // e.g. "source", "phone", "company"
+  matchJson Json // e.g. { "equals": "REFERRAL" } or { "present": true }
+  points    Int
+  isActive  Boolean @default(true)
+}
+
+// ---------------------------------------------------------------- convert (CRM-F-030..034)
+
+model Account {
+  id        String   @id @default(uuid())
+  name      String
+  industry  String?
+  city      String?
+  website   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contacts Contact[]
+  deals    Deal[]
+}
+
+model Contact {
+  id               String    @id @default(uuid())
+  name             String
+  email            String    @unique
+  phone            String?
+  city             String?
+  tags             String[]  @default([])
+  marketingConsent Boolean   @default(false)
+  referralCode     String    @unique
+  tier             TierName  @default(BRONZE)
+  isChurnRisk      Boolean   @default(false)
+  accountId        String?
+  ownerId          String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  account        Account?        @relation(fields: [accountId], references: [id])
+  owner          User?           @relation("ContactOwner", fields: [ownerId], references: [id])
+  convertedFrom  Lead?
+  deals          Deal[]
+  activities     Activity[]
+  tickets        Ticket[]
+  orders         Order[]
+  ledger         PointsLedger[]
+  redemptions    Redemption[]
+  campaignEvents CampaignEvent[]
+  referralsMade  Referral[]      @relation("Referrer")
+  referredBy     Referral?       @relation("Referee")
+
+  @@index([accountId])
+  @@index([ownerId])
+  @@index([city])
+}
+
+model Deal {
+  id            String    @id @default(uuid())
+  title         String
+  value         Decimal   @db.Decimal(12, 2)
+  stage         DealStage @default(PROSPECTING)
+  expectedClose DateTime?
+  wonAt         DateTime?
+  contactId     String
+  accountId     String?
+  ownerId       String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  contact    Contact    @relation(fields: [contactId], references: [id])
+  account    Account?   @relation(fields: [accountId], references: [id])
+  owner      User       @relation("DealOwner", fields: [ownerId], references: [id])
+  activities Activity[]
+  quotes     Quote[]
+  orders     Order[]
+
+  @@index([stage])
+  @@index([ownerId])
+}
+
+// An activity belongs to exactly one of: lead, contact or deal.
+model Activity {
+  id        String       @id @default(uuid())
+  type      ActivityType
+  subject   String
+  notes     String?
+  dueAt     DateTime?
+  done      Boolean      @default(false)
+  userId    String
+  leadId    String?
+  contactId String?
+  dealId    String?
+  createdAt DateTime     @default(now())
+
+  user    User     @relation(fields: [userId], references: [id])
+  lead    Lead?    @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  contact Contact? @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  deal    Deal?    @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([userId, done])
+}
+
+model Quote {
+  id            String   @id @default(uuid())
+  dealId        String
+  // [{ "description": "Annual plan", "quantity": 1, "unitPrice": 100000 }]
+  lineItemsJson Json
+  discountPct   Decimal  @default(0) @db.Decimal(5, 2)
+  total         Decimal  @db.Decimal(12, 2)
+  createdAt     DateTime @default(now())
+
+  deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------------------------------------------- retain (CRM-F-040..042)
+
+model Ticket {
+  id          String         @id @default(uuid())
+  subject     String
+  description String
+  priority    TicketPriority @default(MEDIUM)
+  status      TicketStatus   @default(OPEN)
+  slaDueAt    DateTime
+  resolvedAt  DateTime?
+  contactId   String
+  assigneeId  String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  contact  Contact @relation(fields: [contactId], references: [id])
+  assignee User?   @relation("TicketAssignee", fields: [assigneeId], references: [id])
+
+  @@index([status])
+  @@index([contactId])
+}
+
+// ---------------------------------------------------------------- loyalty (CRM-F-050..053)
+
+model Order {
+  id        String   @id @default(uuid())
+  orderNo   String   @unique
+  amount    Decimal  @db.Decimal(12, 2)
+  orderedAt DateTime @default(now())
+  contactId String
+  dealId    String?
+
+  contact Contact        @relation(fields: [contactId], references: [id])
+  deal    Deal?          @relation(fields: [dealId], references: [id])
+  ledger  PointsLedger[]
+
+  @@index([contactId, orderedAt])
+}
+
+// Append-only: never update or delete rows. Balance = latest balanceAfter (SAD ADR-3).
+model PointsLedger {
+  id           String       @id @default(uuid())
+  contactId    String
+  delta        Int
+  reason       LedgerReason
+  balanceAfter Int
+  orderId      String?
+  createdAt    DateTime     @default(now())
+
+  contact    Contact     @relation(fields: [contactId], references: [id])
+  order      Order?      @relation(fields: [orderId], references: [id])
+  redemption Redemption?
+
+  @@index([contactId, createdAt])
+}
+
+model Tier {
+  name      TierName @id
+  minPoints Int
+}
+
+model Reward {
+  id         String   @id @default(uuid())
+  name       String
+  pointsCost Int
+  stock      Int      @default(0)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  redemptions Redemption[]
+}
+
+model Redemption {
+  id         String   @id @default(uuid())
+  contactId  String
+  rewardId   String
+  ledgerId   String   @unique
+  redeemedAt DateTime @default(now())
+
+  contact Contact      @relation(fields: [contactId], references: [id])
+  reward  Reward       @relation(fields: [rewardId], references: [id])
+  ledger  PointsLedger @relation(fields: [ledgerId], references: [id])
+}
+
+model Referral {
+  id           String   @id @default(uuid())
+  referrerId   String
+  refereeId    String   @unique
+  bonusAwarded Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  referrer Contact @relation("Referrer", fields: [referrerId], references: [id])
+  referee  Contact @relation("Referee", fields: [refereeId], references: [id])
+}
+
+// ---------------------------------------------------------------- analytics (CRM-F-064)
+
+model AuditLog {
+  id       String      @id @default(uuid())
+  userId   String?
+  entity   String // e.g. "Deal"
+  entityId String
+  action   AuditAction
+  diffJson Json?
+  at       DateTime    @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([entity, entityId])
+}
