@@ -1,0 +1,21 @@
+# Every PR title and branch must carry a Jira key (e.g. "CRM-12 Deal pipeline", branch "CRM-12-deal-pipeline")
+# so each change can be traced to its Jira story.
+name: PR checks
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  jira-key:
+    runs-on: ubuntu-latest
+    steps:
+      - name: PR title and branch contain a Jira key
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          echo "Title:  $TITLE"
+          echo "Branch: $BRANCH"
+          [[ "$TITLE" =~ CRM-[0-9]+ ]] || { echo "::error::PR title must contain a Jira key like CRM-12"; exit 1; }
+          [[ "$BRANCH" =~ CRM-[0-9]+ ]] || { echo "::error::Branch name must contain a Jira key like CRM-12-short-name"; exit 1; }
