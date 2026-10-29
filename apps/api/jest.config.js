@@ -3,6 +3,7 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>/tests'],
+  setupFiles: ['<rootDir>/tests/setup.ts'],
   collectCoverageFrom: ['src/**/*.ts', '!src/index.ts'],
   // NFR CRM-NF-006: backend line coverage must stay at or above 70%.
   coverageThreshold: { global: { lines: 70 } },

@@ -71,7 +71,9 @@ All use the password `Password@123`.
 | `rep2@crm.test`      | Sales Representative |
 | `support@crm.test`   | Support Agent        |
 
-Login itself arrives with CRM-4 and CRM-7.
+The login API works from CRM-4 (`POST /api/v1/auth/login`); the login screen arrives with CRM-7.
+
+**Protecting a route:** `import { authenticate } from '../auth'` and add it before your handler: `router.get('/contacts', authenticate, list)`. Inside the handler, `req.user` is `{ id, role }`. Role checks (`authorize`) arrive with CRM-5.
 
 ---
 
