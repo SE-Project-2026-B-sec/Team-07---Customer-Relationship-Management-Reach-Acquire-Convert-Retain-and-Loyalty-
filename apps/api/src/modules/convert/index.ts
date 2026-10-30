@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { dealsRouter } from './deals.router';
+import { activitiesRouter } from './activities.router';
 /**
  * Convert module — CRM-11 contacts and accounts, CRM-13 convert lead (Disha);
  * CRM-12 deal pipeline, CRM-14 activities (Dhriti); CRM-30 quote PDF (Balla).
@@ -8,3 +9,4 @@ import { dealsRouter } from './deals.router';
  */
 export const convertRouter = Router();
 convertRouter.use(dealsRouter);
+convertRouter.use(activitiesRouter);
