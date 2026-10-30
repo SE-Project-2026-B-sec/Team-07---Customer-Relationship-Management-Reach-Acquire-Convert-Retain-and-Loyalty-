@@ -11,6 +11,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '../../api/client';
+import { ActivitiesPanel } from '../../components/activities/ActivitiesPanel';
 import { NewDealForm } from './NewDealForm';
 import {
   STAGES,
@@ -28,9 +29,10 @@ const DEALS_KEY = ['deals'];
 interface DealCardProps {
   deal: Deal;
   onMove: (id: string, stage: Stage) => void;
+  onShowActivities: (deal: Deal) => void;
 }
 
-function DealCard({ deal, onMove }: DealCardProps) {
+function DealCard({ deal, onMove, onShowActivities }: DealCardProps) {
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, isDragging } =
     useDraggable({ id: deal.id });
   const style = transform
@@ -84,6 +86,14 @@ function DealCard({ deal, onMove }: DealCardProps) {
           ))}
         </select>
       </div>
+      <button
+        type="button"
+        onClick={() => onShowActivities(deal)}
+        aria-label={`Activities for ${deal.title}`}
+        className="mt-2 text-xs font-medium text-blue-800 underline"
+      >
+        Activities
+      </button>
     </article>
   );
 }
@@ -92,9 +102,10 @@ interface ColumnProps {
   stage: Stage;
   deals: Deal[];
   onMove: (id: string, stage: Stage) => void;
+  onShowActivities: (deal: Deal) => void;
 }
 
-function Column({ stage, deals, onMove }: ColumnProps) {
+function Column({ stage, deals, onMove, onShowActivities }: ColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
   const total = deals.reduce((sum, d) => sum + d.value, 0);
 
@@ -116,7 +127,7 @@ function Column({ stage, deals, onMove }: ColumnProps) {
       </header>
       <div className="flex min-h-16 flex-col gap-2">
         {deals.map((d) => (
-          <DealCard key={d.id} deal={d} onMove={onMove} />
+          <DealCard key={d.id} deal={d} onMove={onMove} onShowActivities={onShowActivities} />
         ))}
       </div>
     </section>
@@ -127,6 +138,7 @@ export function DealsBoard() {
   const queryClient = useQueryClient();
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [activitiesFor, setActivitiesFor] = useState<Deal | null>(null);
 
   const deals = useQuery({
     queryKey: DEALS_KEY,
@@ -224,10 +236,32 @@ export function DealsBoard() {
                 stage={stage}
                 deals={list.filter((d) => d.stage === stage)}
                 onMove={moveDeal}
+                onShowActivities={setActivitiesFor}
               />
             ))}
           </div>
         </DndContext>
+      )}
+
+      {activitiesFor && (
+        <section
+          aria-label="Deal activities"
+          className="mt-4 rounded border border-slate-200 bg-slate-50 p-4"
+        >
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Activities: {activitiesFor.title}
+            </h2>
+            <button
+              type="button"
+              onClick={() => setActivitiesFor(null)}
+              className="rounded border border-slate-300 px-3 py-1 text-sm"
+            >
+              Close
+            </button>
+          </div>
+          <ActivitiesPanel key={activitiesFor.id} link={{ dealId: activitiesFor.id }} />
+        </section>
       )}
     </div>
   );
