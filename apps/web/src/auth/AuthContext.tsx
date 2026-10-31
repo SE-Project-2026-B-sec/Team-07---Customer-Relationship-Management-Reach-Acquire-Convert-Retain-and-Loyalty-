@@ -48,8 +48,3 @@ export function useAuth(): AuthState {
   if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>');
   return ctx;
 }
-
-/** Like useAuth, but returns null outside <AuthProvider> instead of throwing. */
-export function useOptionalAuth(): AuthState | null {
-  return useContext(AuthContext);
-}

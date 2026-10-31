@@ -2,8 +2,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
-import { useOptionalAuth, type Role } from '../../auth/AuthContext';
-import { ImportLeads } from './ImportLeads';
 import { NewLeadForm } from './NewLeadForm';
 import {
   LEAD_STATUSES,
@@ -15,7 +13,7 @@ import {
 } from './types';
 
 const PAGE_SIZE = 20;
-const IMPORT_ROLES: Role[] = ['ADMIN', 'MARKETING', 'SALES_MANAGER'];
+
 /**
  * CRM-8 Leads list. Later stories add to this page:
  * CRM-9 (Dhriti) an "Import CSV" button, CRM-10 (Disha) assign checkboxes,
@@ -28,9 +26,6 @@ export function LeadsPage() {
   const [duplicatesOnly, setDuplicatesOnly] = useState(false);
   const [page, setPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
-  const [showImport, setShowImport] = useState(false);
-  const role = useOptionalAuth()?.user?.role;
-  const canImport = role !== undefined && IMPORT_ROLES.includes(role);
 
   // Wait until typing pauses before searching.
   useEffect(() => {
@@ -65,15 +60,6 @@ export function LeadsPage() {
           >
             Open website form
           </Link>
-          {canImport && (
-            <button
-              type="button"
-              onClick={() => setShowImport(true)}
-              className="rounded border border-slate-300 px-4 py-2 text-sm"
-            >
-              Import CSV
-            </button>
-          )}
           <button
             type="button"
             onClick={() => setShowForm(true)}
@@ -85,7 +71,6 @@ export function LeadsPage() {
       </div>
 
       {showForm && <NewLeadForm onClose={() => setShowForm(false)} />}
-      {showImport && <ImportLeads onClose={() => setShowImport(false)} />}
 
       <div className="mt-4 flex flex-wrap items-end gap-3">
         <label className="text-sm">
