@@ -1,3 +1,4 @@
+import { usersRouter } from './users.router';
 /**
  * Auth module (owner: Balla) — CRM-4 login, CRM-5 role checks, CRM-6 user admin (Disha).
  * Endpoints (SAD 4.3): POST /auth/login, GET /auth/me, GET/POST/PATCH /users
@@ -10,3 +11,4 @@ export { authenticate, authorize } from './auth.middleware';
 export { assertCanModify, ownedBy } from './ownership';
 export * from './roles';
 export type { AuthUser } from './auth.service';
+authRouter.use('/users', usersRouter); // CRM-6

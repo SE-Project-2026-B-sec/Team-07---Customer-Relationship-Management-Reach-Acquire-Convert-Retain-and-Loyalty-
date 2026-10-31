@@ -1,3 +1,4 @@
+import { usersRouter } from './users.router';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { validate } from '../../common/validate';
@@ -18,3 +19,4 @@ export const authRouter = Router();
 
 authRouter.post('/auth/login', loginLimiter, validate(loginSchema), loginHandler);
 authRouter.get('/auth/me', authenticate, meHandler);
+authRouter.use('/users', usersRouter); // CRM-6
