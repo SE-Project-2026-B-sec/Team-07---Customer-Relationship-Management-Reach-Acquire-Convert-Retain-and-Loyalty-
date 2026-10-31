@@ -4,6 +4,7 @@ import { Dashboard } from './pages/Dashboard';
 import { Login } from './pages/Login';
 import { Placeholder } from './pages/Placeholder';
 import { RequireAuth } from './components/RequireAuth';
+import { DealsBoard } from './pages/deals/DealsBoard';
 
 export function App() {
   return (
@@ -36,10 +37,8 @@ export function App() {
             path="accounts"
             element={<Placeholder title="Accounts" owner="Disha" stories="CRM-11" />}
           />
-          <Route
-            path="deals"
-            element={<Placeholder title="Deals" owner="Dhriti" stories="CRM-12, 14, 30" />}
-          />
+          <Route path="deals" element={<DealsBoard />} />
+
           <Route
             path="tickets"
             element={<Placeholder title="Tickets" owner="Diya" stories="CRM-21, 22, 23" />}
