@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { leadAssignmentRouter } from './lead-assignment.router';
 
 /**
  * Acquire module — CRM-8 lead capture, CRM-20 scoring (Balla); CRM-9 CSV import (Dhriti);
@@ -7,3 +8,4 @@ import { Router } from 'express';
  *            POST /leads/import, POST /leads/assign
  */
 export const acquireRouter = Router();
+acquireRouter.use('/leads', leadAssignmentRouter); // CRM-10
