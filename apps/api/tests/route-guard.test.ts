@@ -8,7 +8,11 @@ import { authenticate } from '../src/modules/auth';
  * If this test fails after you add a route, add `authenticate` (and `authorize(...)`) to it.
  * Only add to this list if the SRS says the endpoint is public.
  */
-const PUBLIC_ROUTES = ['GET /api/v1/health', 'POST /api/v1/auth/login'];
+const PUBLIC_ROUTES = [
+  'GET /api/v1/health',
+  'POST /api/v1/auth/login',
+  'POST /api/v1/public/leads', // CRM-8 website enquiry form (rate limited, honeypot)
+];
 
 interface Layer {
   route?: { path: string; methods: Record<string, boolean>; stack: { handle: RequestHandler }[] };
