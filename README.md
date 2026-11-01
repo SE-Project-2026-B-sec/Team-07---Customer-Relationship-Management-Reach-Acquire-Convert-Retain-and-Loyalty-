@@ -73,7 +73,19 @@ All use the password `Password@123`.
 
 The login API works from CRM-4 (`POST /api/v1/auth/login`); the login screen arrives with CRM-7.
 
-**Protecting a route:** `import { authenticate } from '../auth'` and add it before your handler: `router.get('/contacts', authenticate, list)`. Inside the handler, `req.user` is `{ id, role }`. Role checks (`authorize`) arrive with CRM-5.
+**Protecting a route (CRM-4, CRM-5).** Every API route needs `authenticate`, and usually `authorize(...)` with the roles allowed:
+
+```ts
+import { authenticate, authorize, SALES_TEAM, ownedBy, assertCanModify } from '../auth';
+
+router.get('/contacts', authenticate, authorize(...SALES_TEAM, 'SUPPORT'), list);
+// in the service: prisma.contact.findMany({ where: { ...ownedBy(user) } })  -> reps see only their own
+// before editing:  assertCanModify(user, contact.ownerId)                   -> 403 for another rep's record
+```
+
+Role groups (`ADMIN_ONLY`, `MANAGERS`, `SALES_TEAM`, `MARKETING_TEAM`, `SUPPORT_TEAM`, `LEAD_VIEWERS`, `REPORT_VIEWERS`) and who may use what are in `apps/api/src/modules/auth/roles.ts`. Inside a handler, `req.user` is `{ id, role }`.
+
+`tests/route-guard.test.ts` fails if any route is missing `authenticate`. If an endpoint really is public (only the ones the SRS says), add it to `PUBLIC_ROUTES` in that test.
 
 ---
 

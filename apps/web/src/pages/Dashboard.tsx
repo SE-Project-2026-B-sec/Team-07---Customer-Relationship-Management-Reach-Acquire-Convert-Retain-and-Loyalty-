@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api/client';
+import { OverdueTasksBox } from '../components/activities/OverdueTasksBox';
 
 interface Health {
   status: string;
@@ -25,6 +26,7 @@ export function Dashboard() {
           </span>
         )}
       </div>
+      <OverdueTasksBox />
     </div>
   );
 }

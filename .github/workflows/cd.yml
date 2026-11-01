@@ -1,0 +1,134 @@
+# CRM-3: deploys the API to Render after CI passes on main, then smoke-tests it.
+# The web app deploys itself through Vercel's GitHub integration (no job needed here).
+# Repo secrets needed: RENDER_DEPLOY_HOOK, RENDER_API_KEY, RENDER_SERVICE_ID, API_BASE_URL
+# API_BASE_URL should be e.g. https://your-app.onrender.com/api/v1
+name: CD
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy-api:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+      SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
+      RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+      API_BASE_URL: ${{ secrets.API_BASE_URL }}
+    steps:
+      # -------------------------------------------------
+      # 0️⃣ Verify required secrets (Bash parameter expansion)
+      # -------------------------------------------------
+      - name: Verify required secrets
+        run: |
+          set -euo pipefail
+          : "${RENDER_API_KEY:?Missing RENDER_API_KEY secret}"
+          : "${SERVICE_ID:?Missing RENDER_SERVICE_ID secret}"
+          : "${RENDER_DEPLOY_HOOK:?Missing RENDER_DEPLOY_HOOK secret}"
+          : "${API_BASE_URL:?Missing API_BASE_URL secret}"
+
+      # -------------------------------------------------
+      # 1️⃣ Capture the most recent *live* deployment (for rollback)
+      # -------------------------------------------------
+      - name: Remember the currently live deploy (for rollback)
+        id: previous
+        run: |
+          set -euo pipefail
+          # Fetch up to 100 recent deploys and select the first whose status is "live"
+          PREV=$(curl -fsS -H "Authorization: Bearer $RENDER_API_KEY" \
+            "https://api.render.com/v1/services/$SERVICE_ID/deploys?limit=100" |
+            jq -r '[.[] | select(.deploy.status == "live")] | first | .deploy.id // empty')
+          if [ -z "$PREV" ]; then
+            echo "No previous live deployment found" >&2
+            exit 1
+          fi
+          echo "id=$PREV" >> "$GITHUB_OUTPUT"
+          echo "Currently live deploy ID: $PREV"
+
+      # -------------------------------------------------
+      # 2️⃣ Trigger a new Render deployment (webhook)
+      # -------------------------------------------------
+      - name: Trigger Render deploy
+        id: trigger
+        run: |
+          set -euo pipefail
+          curl -fsS -X POST "$RENDER_DEPLOY_HOOK"
+
+      # -------------------------------------------------
+      # 3️⃣ Wait for the new deployment to become live **and** have a new ID
+      # -------------------------------------------------
+      - name: Wait for the new deploy to finish
+        id: wait
+        run: |
+          set -euo pipefail
+          sleep 20
+          PREV_ID="${{ steps.previous.outputs.id }}"
+          for i in $(seq 1 60); do
+            # Attempt to fetch the latest deploy info; tolerate temporary errors
+            set +e
+            RESP=$(curl -sS -H "Authorization: Bearer $RENDER_API_KEY" \
+              "https://api.render.com/v1/services/$SERVICE_ID/deploys?limit=1")
+            CURL_EXIT=$?
+            set -e
+            if [ $CURL_EXIT -ne 0 ] || [ -z "$RESP" ]; then
+              echo "Temporary error fetching deploy status (exit $CURL_EXIT), will retry"
+            else
+              CUR_ID=$(echo "$RESP" | jq -r '.[0].deploy.id')
+              CUR_STATUS=$(echo "$RESP" | jq -r '.[0].deploy.status')
+              echo "Latest deploy ID: $CUR_ID, status: $CUR_STATUS"
+              if [ "$CUR_ID" != "$PREV_ID" ] && [ "$CUR_STATUS" = "live" ]; then
+                echo "New deployment is live"
+                exit 0
+              fi
+              case "$CUR_STATUS" in
+                build_failed|update_failed|canceled|pre_deploy_failed) exit 1 ;;
+              esac
+            fi
+            sleep 15
+          done
+          echo "Timed out waiting for new live deployment" && exit 1
+
+      # -------------------------------------------------
+      # 4️⃣ Smoke‑test the health endpoint (must return HTTP 200 and {"ok":true})
+      # -------------------------------------------------
+      - name: Smoke test GET /api/v1/health
+        id: smoke
+        run: |
+          set -euo pipefail
+          # API_BASE_URL already ends with /api/v1
+          for i in $(seq 1 10); do
+            if RESPONSE=$(curl -fsS "${API_BASE_URL}/health"); then
+              if echo "$RESPONSE" | jq -e '.ok == true' > /dev/null; then
+                echo "API is healthy"
+                exit 0
+              fi
+            fi
+            sleep 10
+          done
+          echo "Health check failed" && exit 1
+
+      # -------------------------------------------------
+      # 5️⃣ Roll back if the new deployment failed *or* the smoke test failed
+      # -------------------------------------------------
+      - name: Roll back to the previous deploy (if needed)
+        if: |
+          failure() &&
+          steps.trigger.outcome == 'success' &&
+          steps.previous.outputs.id != '' &&
+          (steps.wait.outcome == 'failure' || steps.smoke.outcome == 'failure')
+        run: |
+          set -euo pipefail
+          curl -fsS -X POST -H "Authorization: Bearer $RENDER_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{\"deployId\":\"${{ steps.previous.outputs.id }}\"}" \
+            "https://api.render.com/v1/services/$SERVICE_ID/rollback"
+          echo "Rolled back to ${{ steps.previous.outputs.id }}"

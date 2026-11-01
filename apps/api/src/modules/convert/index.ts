@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import { accountsRouter } from './accounts.router';
+import { activitiesRouter } from './activities.router';
 import { contactsRouter } from './contacts.router';
 import { convertLeadRouter } from './convert-lead.router';
+import { dealsRouter } from './deals.router';
 
 /**
  * Convert module — CRM-11 contacts and accounts, CRM-13 convert lead (Disha);
@@ -11,7 +13,11 @@ import { convertLeadRouter } from './convert-lead.router';
  */
 export const convertRouter = Router();
 
-// CRM-11
+// CRM-11 (Disha)
 convertRouter.use('/contacts', contactsRouter);
 convertRouter.use('/accounts', accountsRouter);
 convertRouter.use('/leads', convertLeadRouter); // CRM-13
+
+// CRM-12, CRM-14 (Dhriti)
+convertRouter.use(dealsRouter);
+convertRouter.use(activitiesRouter);

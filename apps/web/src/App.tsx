@@ -4,11 +4,15 @@ import { Dashboard } from './pages/Dashboard';
 import { Login } from './pages/Login';
 import { Placeholder } from './pages/Placeholder';
 import { RequireAuth } from './components/RequireAuth';
+import { DealsBoard } from './pages/deals/DealsBoard';
+import { EnquiryForm } from './pages/EnquiryForm';
+import { LeadsPage } from './pages/leads/LeadsPage';
 
 export function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/enquiry" element={<EnquiryForm />} />
       <Route element={<RequireAuth />}>
         <Route element={<Layout />}>
           <Route index element={<Dashboard />} />
@@ -18,16 +22,7 @@ export function App() {
               <Placeholder title="Campaigns" owner="Dhriti / Balla" stories="CRM-17, 18, 19" />
             }
           />
-          <Route
-            path="leads"
-            element={
-              <Placeholder
-                title="Leads"
-                owner="Balla / Dhriti / Disha"
-                stories="CRM-8, 9, 10, 20"
-              />
-            }
-          />
+          <Route path="leads" element={<LeadsPage />} />
           <Route
             path="contacts"
             element={<Placeholder title="Contacts" owner="Disha" stories="CRM-11, 13" />}
@@ -36,10 +31,8 @@ export function App() {
             path="accounts"
             element={<Placeholder title="Accounts" owner="Disha" stories="CRM-11" />}
           />
-          <Route
-            path="deals"
-            element={<Placeholder title="Deals" owner="Dhriti" stories="CRM-12, 14, 30" />}
-          />
+          <Route path="deals" element={<DealsBoard />} />
+
           <Route
             path="tickets"
             element={<Placeholder title="Tickets" owner="Diya" stories="CRM-21, 22, 23" />}
