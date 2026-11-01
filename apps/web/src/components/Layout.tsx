@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth, type Role } from '../auth/AuthContext';
+import { TopBarSearch } from './search/TopBarSearch';
 
 interface NavItem {
   to: string;
@@ -84,6 +85,7 @@ export function Layout() {
           >
             ☰
           </button>
+          <TopBarSearch />
           <div className="ml-auto text-sm text-slate-700">
             <span className="font-medium">{user?.name}</span>{' '}
             <span className="text-slate-500">({user ? ROLE_LABEL[user.role] : ''})</span>
