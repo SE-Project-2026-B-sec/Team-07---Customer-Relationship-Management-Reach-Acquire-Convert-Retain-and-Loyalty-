@@ -42,6 +42,8 @@ export interface Ticket {
   breached: boolean;
   contactId: string;
   contactName: string;
+  /** CRM-23: the customer is flagged as a churn risk. */
+  contactChurnRisk: boolean;
   assigneeId: string | null;
   assigneeName: string | null;
   createdAt: string;

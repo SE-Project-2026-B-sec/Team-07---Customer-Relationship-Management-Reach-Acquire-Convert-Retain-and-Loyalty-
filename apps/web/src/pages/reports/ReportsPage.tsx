@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '../../api/client';
 import { ExportCsvButton } from '../../components/ExportCsvButton';
+import { ChurnRiskSection } from './ChurnRiskSection';
 
 export interface FunnelStage {
   key: string;
@@ -28,7 +29,10 @@ const STAGE_HELP: Record<string, string> = {
 
 const pct = (n: number | null) => (n === null ? '—' : `${n}%`);
 
-/** CRM-29 Reports: funnel with drop-off between stages (CRM-F-061) and CSV export (CRM-F-062). */
+/**
+ * CRM-29 Reports: funnel with drop-off between stages (CRM-F-061) and CSV export (CRM-F-062).
+ * CRM-23 adds the at-risk customers list below the funnel.
+ */
 export function ReportsPage() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
@@ -152,6 +156,8 @@ export function ReportsPage() {
           </div>
         )}
       </section>
+
+      <ChurnRiskSection />
     </div>
   );
 }
