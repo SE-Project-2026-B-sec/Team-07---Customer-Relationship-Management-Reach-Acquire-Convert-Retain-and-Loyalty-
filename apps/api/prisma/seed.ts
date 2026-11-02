@@ -269,6 +269,80 @@ async function main() {
     });
   }
 
+  // CRM-29: data for the funnel report. Added last and without rand(), so the data above is
+  // unchanged. The Diwali campaign went to every contact who agreed to marketing (CRM-SR-007).
+  console.log('Creating campaign sends and converted leads for the funnel...');
+  const audience = contacts.filter((c) => c.marketingConsent);
+  await prisma.campaignEvent.createMany({
+    data: audience.flatMap((c, i) => [
+      { campaignId: campaign.id, contactId: c.id, type: 'SENT' as const, occurredAt: daysAgo(15) },
+      ...(i % 3 === 0
+        ? [
+            {
+              campaignId: campaign.id,
+              contactId: c.id,
+              type: 'OPEN' as const,
+              occurredAt: daysAgo(14),
+            },
+          ]
+        : []),
+      ...(i % 10 === 0
+        ? [
+            {
+              campaignId: campaign.id,
+              contactId: c.id,
+              type: 'CLICK' as const,
+              occurredAt: daysAgo(14),
+            },
+          ]
+        : []),
+    ]),
+  });
+
+  // Convert 3 qualified leads into customers (others stay Qualified); every other one orders twice.
+  const toConvert = await prisma.lead.findMany({
+    where: { status: 'QUALIFIED' },
+    orderBy: { email: 'asc' },
+    take: 3,
+  });
+  for (const [i, lead] of toConvert.entries()) {
+    const customer = await prisma.contact.create({
+      data: {
+        name: lead.name,
+        email: lead.email,
+        phone: lead.phone,
+        referralCode: `CONV${String(i + 1).padStart(4, '0')}`,
+        ownerId: lead.ownerId ?? reps[0],
+      },
+    });
+    await prisma.lead.update({
+      where: { id: lead.id },
+      data: { status: 'CONVERTED', convertedContactId: customer.id },
+    });
+    let balance = 0;
+    for (let k = 0; k < (i % 2 === 0 ? 2 : 1); k++) {
+      const amount = 2500 + i * 500;
+      const order = await prisma.order.create({
+        data: {
+          orderNo: `ORD-${String(orderNo++).padStart(5, '0')}`,
+          amount,
+          contactId: customer.id,
+          orderedAt: daysAgo(10 - k * 5),
+        },
+      });
+      balance += Math.floor(amount / 100);
+      await prisma.pointsLedger.create({
+        data: {
+          contactId: customer.id,
+          delta: Math.floor(amount / 100),
+          reason: 'EARN',
+          balanceAfter: balance,
+          orderId: order.id,
+        },
+      });
+    }
+  }
+
   console.log(`Done. Log in with any @crm.test account using password "${password}".`);
 }
 

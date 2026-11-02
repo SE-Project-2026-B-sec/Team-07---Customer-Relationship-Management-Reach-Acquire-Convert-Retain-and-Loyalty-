@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
+import { ExportCsvButton } from '../../components/ExportCsvButton';
 import { useOptionalAuth, type Role } from '../../auth/AuthContext';
 import { ImportLeads } from './ImportLeads';
 import { NewLeadForm } from './NewLeadForm';
@@ -57,7 +58,8 @@ export function LeadsPage() {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-slate-900">Leads</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <ExportCsvButton name="leads" params={params} />
           <Link
             to="/enquiry"
             target="_blank"

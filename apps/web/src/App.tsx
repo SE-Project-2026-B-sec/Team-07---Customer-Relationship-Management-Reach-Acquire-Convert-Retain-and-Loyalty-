@@ -7,6 +7,7 @@ import { RequireAuth } from './components/RequireAuth';
 import { DealsBoard } from './pages/deals/DealsBoard';
 import { EnquiryForm } from './pages/EnquiryForm';
 import { LeadsPage } from './pages/leads/LeadsPage';
+import { ReportsPage } from './pages/reports/ReportsPage';
 import { TicketsPage } from './pages/tickets/TicketsPage';
 import { CampaignsPage } from './pages/campaigns/CampaignsPage';
 
@@ -37,10 +38,7 @@ export function App() {
               <Placeholder title="Loyalty" owner="Disha / Balla" stories="CRM-24, 25, 26, 27" />
             }
           />
-          <Route
-            path="reports"
-            element={<Placeholder title="Reports" owner="Diya / Dhriti" stories="CRM-28, 29, 31" />}
-          />
+          <Route path="reports" element={<ReportsPage />} />
           <Route
             path="admin"
             element={<Placeholder title="Admin" owner="Disha" stories="CRM-6" />}
