@@ -7,6 +7,7 @@ import { RequireAuth } from './components/RequireAuth';
 import { DealsBoard } from './pages/deals/DealsBoard';
 import { EnquiryForm } from './pages/EnquiryForm';
 import { LeadsPage } from './pages/leads/LeadsPage';
+import { CampaignsPage } from './pages/campaigns/CampaignsPage';
 
 export function App() {
   return (
@@ -16,12 +17,7 @@ export function App() {
       <Route element={<RequireAuth />}>
         <Route element={<Layout />}>
           <Route index element={<Dashboard />} />
-          <Route
-            path="campaigns"
-            element={
-              <Placeholder title="Campaigns" owner="Dhriti / Balla" stories="CRM-17, 18, 19" />
-            }
-          />
+          <Route path="campaigns" element={<CampaignsPage />} />
           <Route path="leads" element={<LeadsPage />} />
           <Route
             path="contacts"
