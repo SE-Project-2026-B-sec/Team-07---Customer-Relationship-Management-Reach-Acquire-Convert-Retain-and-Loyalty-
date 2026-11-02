@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { campaignsRouter } from './campaigns.router';
 
 /**
  * Reach module — CRM-17 segments, CRM-19 campaign metrics (Balla); CRM-18 campaigns (Dhriti).
@@ -6,3 +7,6 @@ import { Router } from 'express';
  *            POST /campaigns/:id/send, GET /campaigns/:id/metrics
  */
 export const reachRouter = Router();
+
+// CRM-18 (Dhriti)
+reachRouter.use(campaignsRouter);
