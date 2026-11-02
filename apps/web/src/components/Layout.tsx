@@ -17,7 +17,7 @@ export const NAV: NavItem[] = [
   { to: '/contacts', label: 'Contacts', roles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'SUPPORT'] },
   { to: '/accounts', label: 'Accounts', roles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP'] },
   { to: '/deals', label: 'Deals', roles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP'] },
-  { to: '/tickets', label: 'Tickets', roles: ['ADMIN', 'SUPPORT'] },
+  { to: '/tickets', label: 'Tickets', roles: ['ADMIN', 'SUPPORT', 'SALES_MANAGER'] },
   { to: '/loyalty', label: 'Loyalty', roles: ['ADMIN', 'SUPPORT'] },
   { to: '/reports', label: 'Reports', roles: ['ADMIN', 'MARKETING', 'SALES_MANAGER'] },
   { to: '/admin', label: 'Admin', roles: ['ADMIN'] },
