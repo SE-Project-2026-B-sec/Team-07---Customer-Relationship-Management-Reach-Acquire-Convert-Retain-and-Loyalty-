@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import pinoHttp from 'pino-http';
 import { errorHandler, notFound } from './common/errors';
 import { logger } from './common/logger';
+import { requestContext } from './common/request-context';
 import { prisma } from './common/prisma';
 import { acquireRouter } from './modules/acquire';
 import { analyticsRouter } from './modules/analytics';
@@ -25,6 +26,8 @@ export function createApp({ corsOrigin = 'http://localhost:5173' }: AppOptions =
   app.use(cors({ origin: corsOrigin }));
   app.use(express.json({ limit: '1mb' }));
   app.use(pinoHttp({ logger }));
+  // CRM-31: lets the audit hook see who is making each change.
+  app.use(requestContext);
 
   // Health check used by the uptime monitor and the deploy smoke test (CRM-NF-003, CRM-NF-010).
   app.get('/api/v1/health', async (_req, res) => {

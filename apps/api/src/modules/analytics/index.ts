@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { auditRouter } from './audit.router';
 import { reportsRouter } from './reports.router';
 import { searchRouter } from './search.router';
 
@@ -15,3 +16,6 @@ analyticsRouter.use(searchRouter);
 
 // CRM-29 (Diya)
 analyticsRouter.use(reportsRouter);
+
+// CRM-31 (Diya)
+analyticsRouter.use(auditRouter);

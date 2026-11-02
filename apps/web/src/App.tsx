@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout';
+import { AuditLogPage } from './pages/audit/AuditLogPage';
 import { Dashboard } from './pages/Dashboard';
 import { Login } from './pages/Login';
 import { Placeholder } from './pages/Placeholder';
@@ -43,6 +44,7 @@ export function App() {
             }
           />
           <Route path="reports" element={<ReportsPage />} />
+          <Route path="audit-log" element={<AuditLogPage />} />
           <Route
             path="admin"
             element={<Placeholder title="Admin" owner="Disha" stories="CRM-6" />}
