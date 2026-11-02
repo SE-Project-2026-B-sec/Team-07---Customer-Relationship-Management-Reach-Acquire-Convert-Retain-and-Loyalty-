@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { customer360Router } from './customer360.router';
+import { ticketsRouter } from './tickets.router';
 
 /**
  * Retain module — CRM-21 tickets with SLA, CRM-23 churn flag (Diya); CRM-22 Customer 360 (Dhriti).
@@ -8,3 +9,6 @@ import { customer360Router } from './customer360.router';
 export const retainRouter = Router();
 // CRM-22 (Dhriti)
 retainRouter.use(customer360Router);
+
+// CRM-21 (Diya)
+retainRouter.use(ticketsRouter);
