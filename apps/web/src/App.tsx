@@ -7,6 +7,7 @@ import { RequireAuth } from './components/RequireAuth';
 import { DealsBoard } from './pages/deals/DealsBoard';
 import { EnquiryForm } from './pages/EnquiryForm';
 import { LeadsPage } from './pages/leads/LeadsPage';
+import { TicketsPage } from './pages/tickets/TicketsPage';
 import { CampaignsPage } from './pages/campaigns/CampaignsPage';
 
 export function App() {
@@ -29,10 +30,7 @@ export function App() {
           />
           <Route path="deals" element={<DealsBoard />} />
 
-          <Route
-            path="tickets"
-            element={<Placeholder title="Tickets" owner="Diya" stories="CRM-21, 22, 23" />}
-          />
+          <Route path="tickets" element={<TicketsPage />} />
           <Route
             path="loyalty"
             element={
