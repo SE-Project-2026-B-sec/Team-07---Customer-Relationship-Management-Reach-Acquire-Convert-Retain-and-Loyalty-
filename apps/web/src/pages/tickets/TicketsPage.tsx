@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { api } from '../../api/client';
 import { useOptionalAuth } from '../../auth/AuthContext';
+import { ExportCsvButton } from '../../components/ExportCsvButton';
 import { NewTicketForm } from './NewTicketForm';
 import {
   formatDateTime,
@@ -72,15 +73,18 @@ export function TicketsPage() {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-slate-900">Tickets</h1>
-        {canWrite && (
-          <button
-            type="button"
-            onClick={() => setShowForm(true)}
-            className="rounded bg-blue-700 px-4 py-2 text-sm text-white"
-          >
-            New ticket
-          </button>
-        )}
+        <div className="flex flex-wrap gap-2">
+          <ExportCsvButton name="tickets" params={params} />
+          {canWrite && (
+            <button
+              type="button"
+              onClick={() => setShowForm(true)}
+              className="rounded bg-blue-700 px-4 py-2 text-sm text-white"
+            >
+              New ticket
+            </button>
+          )}
+        </div>
       </div>
 
       {showForm && <NewTicketForm onClose={() => setShowForm(false)} />}

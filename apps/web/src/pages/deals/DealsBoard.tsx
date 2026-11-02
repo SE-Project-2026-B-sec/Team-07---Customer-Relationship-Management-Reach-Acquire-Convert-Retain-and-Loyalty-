@@ -11,6 +11,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '../../api/client';
+import { ExportCsvButton } from '../../components/ExportCsvButton';
 import { ActivitiesPanel } from '../../components/activities/ActivitiesPanel';
 import { NewDealForm } from './NewDealForm';
 import {
@@ -201,13 +202,16 @@ export function DealsBoard() {
             Open pipeline: <strong data-testid="open-pipeline">{formatInr(openValue)}</strong>
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowForm(true)}
-          className="rounded bg-blue-700 px-4 py-2 text-sm text-white"
-        >
-          New deal
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <ExportCsvButton name="deals" />
+          <button
+            type="button"
+            onClick={() => setShowForm(true)}
+            className="rounded bg-blue-700 px-4 py-2 text-sm text-white"
+          >
+            New deal
+          </button>
+        </div>
       </div>
 
       {showForm && <NewDealForm onClose={() => setShowForm(false)} />}
