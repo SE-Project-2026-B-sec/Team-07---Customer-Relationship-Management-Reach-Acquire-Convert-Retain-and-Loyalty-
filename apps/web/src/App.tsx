@@ -10,6 +10,8 @@ import { LeadsPage } from './pages/leads/LeadsPage';
 import { ReportsPage } from './pages/reports/ReportsPage';
 import { TicketsPage } from './pages/tickets/TicketsPage';
 import { CampaignsPage } from './pages/campaigns/CampaignsPage';
+import { Customer360Page } from './pages/customers/Customer360Page';
+import { CustomersPage } from './pages/customers/CustomersPage';
 
 export function App() {
   return (
@@ -21,6 +23,8 @@ export function App() {
           <Route index element={<Dashboard />} />
           <Route path="campaigns" element={<CampaignsPage />} />
           <Route path="leads" element={<LeadsPage />} />
+          <Route path="customers" element={<CustomersPage />} />
+          <Route path="customers/:id" element={<Customer360Page />} />
           <Route
             path="contacts"
             element={<Placeholder title="Contacts" owner="Disha" stories="CRM-11, 13" />}

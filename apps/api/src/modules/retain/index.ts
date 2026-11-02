@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { churnRouter } from './churn.router';
+import { customer360Router } from './customer360.router';
 import { ticketsRouter } from './tickets.router';
 
 /**
@@ -7,6 +8,8 @@ import { ticketsRouter } from './tickets.router';
  * Endpoints: GET/POST/PATCH /tickets, GET /churn-risk, GET /customers/:id/360
  */
 export const retainRouter = Router();
+// CRM-22 (Dhriti)
+retainRouter.use(customer360Router);
 
 // CRM-21 (Diya)
 retainRouter.use(ticketsRouter);
