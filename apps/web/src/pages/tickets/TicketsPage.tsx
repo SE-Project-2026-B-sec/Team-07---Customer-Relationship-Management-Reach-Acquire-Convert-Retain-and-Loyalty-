@@ -198,7 +198,17 @@ export function TicketsPage() {
                     </span>
                   )}
                 </td>
-                <td className="px-3 py-2 text-slate-700">{t.contactName}</td>
+                <td className="px-3 py-2 text-slate-700">
+                  {t.contactName}
+                  {t.contactChurnRisk && (
+                    <span
+                      title="No order in 90+ days, or 2+ open High/Urgent tickets"
+                      className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-900"
+                    >
+                      Churn risk
+                    </span>
+                  )}
+                </td>
                 <td className="px-3 py-2">
                   <span className={`rounded px-2 py-0.5 text-xs ${PRIORITY_STYLE[t.priority]}`}>
                     {PRIORITY_LABEL[t.priority]}
