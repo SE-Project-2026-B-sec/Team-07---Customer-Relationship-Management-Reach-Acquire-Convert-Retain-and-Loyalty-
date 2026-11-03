@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { ordersRouter, pointsRouter } from './orders.router';
+import { tiersRouter } from './tiers.router';
 
 /**
  * Loyalty module — CRM-24 orders and points, CRM-25 tiers, CRM-26 rewards (Disha);
@@ -13,3 +14,6 @@ export const loyaltyRouter = Router();
 // CRM-24
 loyaltyRouter.use('/orders', ordersRouter);
 loyaltyRouter.use('/customers', pointsRouter);
+
+// CRM-25
+loyaltyRouter.use('/tiers', tiersRouter);
