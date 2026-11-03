@@ -3,7 +3,7 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from '../../common/prisma';
 
 const include = {
-  contact: { select: { id: true, name: true } },
+  contact: { select: { id: true, name: true, isChurnRisk: true } },
   assignee: { select: { id: true, name: true } },
 } satisfies Prisma.TicketInclude;
 

@@ -8,6 +8,7 @@ import type { Prisma } from '@prisma/client';
 import { AppError } from '../../common/errors';
 import { paged, toSkipTake } from '../../common/pagination';
 import type { AuthUser } from '../auth';
+import { churnService } from './churn.service';
 import { type TicketRow, ticketsRepository as repo } from './tickets.repository';
 import type { CreateTicketInput, ListTicketsQuery, UpdateTicketInput } from './tickets.schema';
 import { isBreached, isOpen, OPEN_STATUSES, slaDueAt } from './tickets.sla';
@@ -23,11 +24,18 @@ const toDto = (t: TicketRow, now = new Date()) => ({
   breached: isBreached(t, now),
   contactId: t.contactId,
   contactName: t.contact.name,
+  contactChurnRisk: t.contact.isChurnRisk,
   assigneeId: t.assigneeId,
   assigneeName: t.assignee?.name ?? null,
   createdAt: t.createdAt,
   updatedAt: t.updatedAt,
 });
+
+/** Recomputes the customer's churn flag (CRM-23) and reloads the ticket so the DTO shows it. */
+async function refreshChurn(row: TicketRow): Promise<TicketRow> {
+  await churnService.recompute(row.contactId);
+  return (await repo.findById(row.id)) ?? row;
+}
 
 const notFound = () => new AppError(404, 'TICKET_NOT_FOUND', 'Ticket not found');
 
@@ -91,7 +99,8 @@ export const ticketsService = {
       createdAt,
       slaDueAt: slaDueAt(createdAt, input.priority),
     });
-    return toDto(row);
+    // CRM-23: a new High/Urgent ticket can make this customer a churn risk.
+    return toDto(await refreshChurn(row));
   },
 
   async update(id: string, input: UpdateTicketInput) {
@@ -113,6 +122,7 @@ export const ticketsService = {
       if (!isOpen(input.status) && !existing.resolvedAt) data.resolvedAt = new Date();
       if (isOpen(input.status)) data.resolvedAt = null;
     }
-    return toDto(await repo.update(id, data));
+    // CRM-23: priority or status changes can turn the churn flag on or off.
+    return toDto(await refreshChurn(await repo.update(id, data)));
   },
 };

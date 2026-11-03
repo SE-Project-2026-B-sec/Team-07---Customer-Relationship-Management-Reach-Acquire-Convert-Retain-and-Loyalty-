@@ -24,6 +24,7 @@ const makeTicket = (id: string, subject: string, extra: Partial<Ticket> = {}): T
   breached: false,
   contactId: 'c1',
   contactName: 'Asha Rao',
+  contactChurnRisk: false,
   assigneeId: 'u1',
   assigneeName: 'Agent',
   createdAt: new Date().toISOString(),
@@ -113,6 +114,19 @@ describe('TicketsPage (CRM-21)', () => {
     expect(onTime).toHaveAttribute('data-breached', 'false');
     expect(within(onTime).queryByText('SLA breached')).not.toBeInTheDocument();
     expect(within(onTime).getByText(/^Due in/)).toBeInTheDocument();
+  });
+
+  it('CRM-23 shows a "Churn risk" badge next to a flagged customer', async () => {
+    mockServer([
+      makeTicket('t1', 'Refund pending', { contactName: 'Meera Iyer', contactChurnRisk: true }),
+      makeTicket('t2', 'Password reset'),
+    ]);
+    renderPage();
+
+    expect(within(await rowFor('Refund pending')).getByText('Churn risk')).toBeInTheDocument();
+    expect(
+      within(await rowFor('Password reset')).queryByText('Churn risk'),
+    ).not.toBeInTheDocument();
   });
 
   it('"SLA breached only" asks the API for breached tickets', async () => {

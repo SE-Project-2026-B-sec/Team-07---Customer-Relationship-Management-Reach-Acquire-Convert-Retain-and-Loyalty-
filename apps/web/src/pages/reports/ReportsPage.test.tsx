@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { AtRiskCustomer } from './ChurnRiskSection';
 import { ReportsPage, type FunnelReport } from './ReportsPage';
 
 const report: FunnelReport = {
@@ -15,9 +16,32 @@ const report: FunnelReport = {
   ],
 };
 
+const atRisk: AtRiskCustomer[] = [
+  {
+    id: 'c1',
+    name: 'Meera Iyer',
+    email: 'meera@example.com',
+    phone: null,
+    tier: 'GOLD',
+    lastOrderAt: '2026-07-01T10:00:00.000Z',
+    openHighTickets: 0,
+    reasons: ['NO_RECENT_ORDER'],
+  },
+  {
+    id: 'c2',
+    name: 'Rohan Das',
+    email: 'rohan@example.com',
+    phone: null,
+    tier: 'BRONZE',
+    lastOrderAt: null,
+    openHighTickets: 3,
+    reasons: ['OPEN_HIGH_TICKETS'],
+  },
+];
+
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
 
-function mockServer(options: { exportStatus?: number } = {}) {
+function mockServer(options: { exportStatus?: number; atRiskTotal?: number } = {}) {
   const urls: URL[] = [];
   vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
     const url = new URL(String(input), 'http://x');
@@ -29,6 +53,10 @@ function mockServer(options: { exportStatus?: number } = {}) {
       return new Response('Stage,Count\r\n', {
         headers: { 'Content-Disposition': 'attachment; filename="funnel-2026-11-02.csv"' },
       });
+    }
+    if (url.pathname.endsWith('/churn-risk')) {
+      const data = options.atRiskTotal === 0 ? [] : atRisk;
+      return json({ data, page: 1, pageSize: 20, total: options.atRiskTotal ?? data.length });
     }
     return json(report);
   });
@@ -137,5 +165,27 @@ describe('ReportsPage (CRM-29)', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('No access');
     expect(clicked).toEqual([]);
+  });
+});
+
+describe('At-risk customers (CRM-23)', () => {
+  it('lists flagged customers with the reason for each', async () => {
+    mockServer({ atRiskTotal: 42 });
+    renderPage();
+
+    const section = await screen.findByRole('region', { name: /At-risk customers/ });
+    expect(await within(section).findByText('Meera Iyer')).toBeInTheDocument();
+    expect(within(section).getByText('42')).toBeInTheDocument();
+    expect(
+      within(section).getByText(/^No order in 90\+ days \(last 1 Jul 2026\)$/),
+    ).toBeInTheDocument();
+    expect(within(section).getByText('3 open High/Urgent tickets')).toBeInTheDocument();
+    expect(within(section).getByText('Showing 2 of 42.')).toBeInTheDocument();
+  });
+
+  it('says so when nobody is at risk', async () => {
+    mockServer({ atRiskTotal: 0 });
+    renderPage();
+    expect(await screen.findByText('No customers are at risk right now.')).toBeInTheDocument();
   });
 });
