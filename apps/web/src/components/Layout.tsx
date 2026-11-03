@@ -23,6 +23,7 @@ export const NAV: NavItem[] = [
   { to: '/loyalty', label: 'Loyalty', roles: ['ADMIN', 'SUPPORT'] },
   { to: '/reports', label: 'Reports', roles: ['ADMIN', 'MARKETING', 'SALES_MANAGER'] },
   { to: '/admin', label: 'Admin', roles: ['ADMIN'] },
+  { to: '/audit-log', label: 'Audit log', roles: ['ADMIN'] }, // CRM-31
 ];
 
 const ROLE_LABEL: Record<Role, string> = {
