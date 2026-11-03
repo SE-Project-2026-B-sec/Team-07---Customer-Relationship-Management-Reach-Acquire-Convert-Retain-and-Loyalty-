@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { ordersRouter, pointsRouter } from './orders.router';
 
 /**
  * Loyalty module — CRM-24 orders and points, CRM-25 tiers, CRM-26 rewards (Disha);
@@ -8,3 +9,7 @@ import { Router } from 'express';
  * Rule: points change only by inserting PointsLedger rows inside a transaction.
  */
 export const loyaltyRouter = Router();
+
+// CRM-24
+loyaltyRouter.use('/orders', ordersRouter);
+loyaltyRouter.use('/customers', pointsRouter);
