@@ -94,8 +94,24 @@ export const contactsService = {
     return repo.update(id, body);
   },
 
+  /**
+   * Delete on request (CRM-SR-007, DPDP Act 2023). A contact with no history is deleted. One that
+   * deals, orders, tickets or points still refer to cannot be removed without breaking those
+   * records, so their personal data is erased instead (name, email, phone, city, tags, consent,
+   * the lead they came from, campaign history and the audit details that held it).
+   */
   async remove(user: CurrentUser, id: string) {
     await getOwned(user, id);
-    await repo.delete(id);
+    try {
+      await repo.delete(id);
+    } catch (err) {
+      const fkViolation =
+        err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2003';
+      if (!fkViolation) throw err;
+      const leadIds = await repo.anonymise(id);
+      await repo.scrubAudit('Contact', [id]);
+      await repo.scrubAudit('Lead', leadIds);
+      await repo.logErasure(id, user.id);
+    }
   },
 };

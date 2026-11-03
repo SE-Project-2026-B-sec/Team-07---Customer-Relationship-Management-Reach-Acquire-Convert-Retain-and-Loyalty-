@@ -27,6 +27,11 @@ export default tseslint.config(
     languageOptions: { globals: globals.node },
   },
   {
+    // CRM-32 k6 load scripts run inside k6, which provides __ENV.
+    files: ['perf/**/*.js'],
+    languageOptions: { sourceType: 'module', globals: { __ENV: 'readonly' } },
+  },
+  {
     rules: {
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     },

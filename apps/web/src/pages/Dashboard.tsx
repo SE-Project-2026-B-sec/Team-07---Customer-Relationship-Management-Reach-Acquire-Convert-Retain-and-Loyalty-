@@ -65,7 +65,8 @@ function KpiCard({
     <div data-testid={`kpi-${id}`} className="rounded border border-slate-200 bg-white p-4">
       <dt className="text-sm font-medium text-slate-700">{label}</dt>
       <dd className="mt-1 text-2xl font-semibold text-slate-900">{value}</dd>
-      <p className="mt-1 text-xs text-slate-600">{hint}</p>
+      {/* CRM-32 (TC-UX-02): a <dl> may only hold <dt>/<dd>, so the hint is a second <dd>. */}
+      <dd className="mt-1 text-xs text-slate-600">{hint}</dd>
     </div>
   );
 }

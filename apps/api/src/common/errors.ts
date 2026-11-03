@@ -29,6 +29,18 @@ export function errorHandler(err: unknown, _req: Request, res: Response, _next: 
       error: { code: 'VALIDATION_ERROR', message: 'Invalid request', details: err.issues },
     });
   }
+  // CRM-32 (TC-SEC-05): errors from express.json() are the client's fault, not a server error.
+  const bodyError = err as { type?: string };
+  if (bodyError?.type === 'entity.parse.failed') {
+    return res
+      .status(400)
+      .json({ error: { code: 'INVALID_JSON', message: 'The request body is not valid JSON' } });
+  }
+  if (bodyError?.type === 'entity.too.large') {
+    return res
+      .status(413)
+      .json({ error: { code: 'PAYLOAD_TOO_LARGE', message: 'The request body is too large' } });
+  }
   logger.error({ err }, 'Unhandled error');
   return res
     .status(500)

@@ -188,7 +188,7 @@ export function AuditLogPage() {
         </p>
       )}
 
-      <div className="mt-4 overflow-x-auto rounded border border-slate-200 bg-white">
+      <div className="mt-4 relative overflow-x-auto rounded border border-slate-200 bg-white">
         <table className="w-full min-w-[760px] text-left text-sm">
           <thead className="bg-slate-50 text-slate-600">
             <tr>

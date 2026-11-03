@@ -7,3 +7,6 @@ coverage/
 playwright-report/
 test-results/
 *.tsbuildinfo
+
+# CRM-32 k6 output (local runs)
+perf/k6-summary.json
