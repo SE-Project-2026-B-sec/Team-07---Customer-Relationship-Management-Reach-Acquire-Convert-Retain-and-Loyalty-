@@ -138,7 +138,7 @@ export function ImportLeads({ onClose }: { onClose: () => void }) {
           <p className="text-sm text-slate-700">
             Previewing the first {preview.length} of {rows.length} rows from {fileName}
           </p>
-          <div className="mt-2 overflow-x-auto rounded border border-slate-200">
+          <div className="mt-2 relative overflow-x-auto rounded border border-slate-200">
             <table aria-label="Preview" className="w-full min-w-[480px] text-left text-sm">
               <thead className="bg-slate-50 text-slate-600">
                 <tr>
@@ -186,7 +186,7 @@ export function ImportLeads({ onClose }: { onClose: () => void }) {
             Rejected: <strong data-testid="report-rejected">{report.rejected}</strong>
           </p>
           {report.errors.length > 0 && (
-            <div className="mt-2 overflow-x-auto rounded border border-slate-200">
+            <div className="mt-2 relative overflow-x-auto rounded border border-slate-200">
               <table aria-label="Rejected rows" className="w-full min-w-[480px] text-left">
                 <thead className="bg-slate-50 text-slate-600">
                   <tr>

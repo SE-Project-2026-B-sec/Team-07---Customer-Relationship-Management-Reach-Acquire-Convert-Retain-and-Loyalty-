@@ -20,7 +20,12 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    // Everyday browser tests (CI). The timing test is left out: it needs a production build.
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] }, testIgnore: /perf\.spec\.ts/ },
+    // CRM-32 TC-PERF-02: `npm run test:perf -w apps/web` against `vite preview`.
+    { name: 'perf', use: { ...devices['Desktop Chrome'] }, testMatch: /perf\.spec\.ts/ },
+  ],
   webServer: [
     {
       command: 'npx tsx src/index.ts',

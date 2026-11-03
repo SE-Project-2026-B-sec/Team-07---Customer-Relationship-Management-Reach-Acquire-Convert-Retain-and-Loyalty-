@@ -1,0 +1,87 @@
+# CRM-32: non-functional test runs against the DEPLOYED app. Started by hand only
+# (Actions tab -> "NFR runs" -> Run workflow), because it puts load on the live site.
+#   - TC-SEC-01 HTTPS redirect + HSTS header
+#   - TC-SEC-05 OWASP ZAP baseline scan (pass = no High alerts)
+#   - TC-PERF-01 k6, 50 virtual users for 2 minutes (pass = p95 < 500 ms, errors < 1%)
+# Reports are uploaded as workflow artifacts. Results go in docs/test-runs/CRM-32-report.md.
+# Optional repo secrets: K6_EMAIL / K6_PASSWORD (a read-only demo login on the deployed site).
+name: NFR runs
+
+on:
+  workflow_dispatch:
+    inputs:
+      web_url:
+        description: 'Deployed web app, e.g. https://your-app.vercel.app'
+        required: true
+      api_url:
+        description: 'Deployed API base, e.g. https://your-api.onrender.com/api/v1 (blank = API_BASE_URL secret)'
+        required: false
+      duration:
+        description: 'k6 duration'
+        required: false
+        default: '2m'
+
+permissions:
+  contents: read
+
+jobs:
+  https:
+    name: TC-SEC-01 HTTPS and HSTS
+    runs-on: ubuntu-latest
+    env:
+      WEB_URL: ${{ inputs.web_url }}
+      API_URL: ${{ inputs.api_url || secrets.API_BASE_URL }}
+    steps:
+      - name: Plain HTTP redirects to HTTPS, and HTTPS sends HSTS
+        run: |
+          set -euo pipefail
+          for url in "$WEB_URL" "${API_URL%/api/v1}/api/v1/health"; do
+            http="http://${url#https://}"
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$http")
+            loc=$(curl -s -o /dev/null -w '%{redirect_url}' "$http")
+            echo "$http -> $code $loc"
+            [[ "$code" =~ ^30[1278]$ && "$loc" == https://* ]] || { echo "::error::$http is not redirected to HTTPS"; exit 1; }
+            hsts=$(curl -sI "$url" | grep -i '^strict-transport-security' || true)
+            echo "$url -> ${hsts:-no HSTS header}"
+            [[ -n "$hsts" ]] || { echo "::error::$url has no Strict-Transport-Security header"; exit 1; }
+          done
+
+  zap:
+    name: TC-SEC-05 OWASP ZAP baseline
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: ZAP baseline scan of the web app
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: ${{ inputs.web_url }}
+          allow_issue_writing: false
+          fail_action: false
+          artifact_name: zap-baseline
+      - name: Fail on any High-risk alert
+        run: |
+          high=$(jq '[.site[].alerts[] | select(.riskcode == "3")] | length' report_json.json)
+          jq -r '.site[].alerts[] | "\(.riskdesc)\t\(.alert)"' report_json.json | sort | uniq -c || true
+          echo "High-risk alerts: $high"
+          [ "$high" -eq 0 ] || { echo "::error::ZAP found $high High-risk alert(s)"; exit 1; }
+
+  k6:
+    name: TC-PERF-01 k6 load (50 VUs)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run k6
+        env:
+          API_URL: ${{ inputs.api_url || secrets.API_BASE_URL }}
+          EMAIL: ${{ secrets.K6_EMAIL || 'manager@crm.test' }}
+          PASSWORD: ${{ secrets.K6_PASSWORD || 'Password@123' }}
+          DURATION: ${{ inputs.duration }}
+        run: |
+          docker run --rm -i -e API_URL -e EMAIL -e PASSWORD -e DURATION \
+            -v "$PWD/perf:/perf" grafana/k6:0.54.0 \
+            run --summary-export /perf/k6-summary.json - < perf/api-load.js
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-summary
+          path: perf/k6-summary.json

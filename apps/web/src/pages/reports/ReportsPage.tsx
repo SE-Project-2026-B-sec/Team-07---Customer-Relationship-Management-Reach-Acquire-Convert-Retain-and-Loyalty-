@@ -107,7 +107,7 @@ export function ReportsPage() {
         {funnel.isLoading && <p className="mt-3 text-sm text-slate-600">Loading funnel…</p>}
 
         {funnel.data && !badRange && (
-          <div className="mt-4 overflow-x-auto rounded border border-slate-200 bg-white">
+          <div className="mt-4 relative overflow-x-auto rounded border border-slate-200 bg-white">
             <table className="w-full min-w-[560px] text-left text-sm">
               <caption className="sr-only">
                 Funnel from reached to repeat customers, with drop-off between stages
