@@ -8,6 +8,7 @@ import { AppError } from '../../common/errors';
 import { paged, toSkipTake } from '../../common/pagination';
 import { prisma } from '../../common/prisma';
 import type { CreateOrderBody, ListOrdersQuery } from './orders.schema';
+import { tierFor } from './tiers.service';
 
 export const RUPEES_PER_POINT = 100;
 
@@ -61,6 +62,12 @@ export const ordersService = {
       });
       let balance = last?.balanceAfter ?? 0;
 
+      const customer = await tx.contact.findUniqueOrThrow({
+        where: { id: body.contactId },
+        select: { tier: true },
+      });
+      let tier = customer.tier;
+
       // An order under Rs 100 earns nothing, so no ledger row is written for it.
       if (earned > 0) {
         balance += earned;
@@ -73,9 +80,20 @@ export const ordersService = {
             orderId: order.id,
           },
         });
+
+        // CRM-25: re-check the tier on lifetime points, in the same transaction.
+        const lifetime = await tx.pointsLedger.aggregate({
+          where: { contactId: body.contactId, delta: { gt: 0 } },
+          _sum: { delta: true },
+        });
+        const tiers = await tx.tier.findMany({ select: { name: true, minPoints: true } });
+        tier = tierFor(lifetime._sum.delta ?? 0, tiers);
+        if (tier !== customer.tier) {
+          await tx.contact.update({ where: { id: body.contactId }, data: { tier } });
+        }
       }
 
-      return { order, pointsEarned: earned, balance };
+      return { order, pointsEarned: earned, balance, tier, tierChanged: tier !== customer.tier };
     });
   },
 
