@@ -10,6 +10,7 @@ import { LeadsPage } from './pages/leads/LeadsPage';
 import { ReportsPage } from './pages/reports/ReportsPage';
 import { TicketsPage } from './pages/tickets/TicketsPage';
 import { CampaignsPage } from './pages/campaigns/CampaignsPage';
+import { SegmentsPage } from './pages/segments/SegmentsPage';
 import { Customer360Page } from './pages/customers/Customer360Page';
 import { CustomersPage } from './pages/customers/CustomersPage';
 
@@ -22,6 +23,7 @@ export function App() {
         <Route element={<Layout />}>
           <Route index element={<Dashboard />} />
           <Route path="campaigns" element={<CampaignsPage />} />
+          <Route path="segments" element={<SegmentsPage />} />
           <Route path="leads" element={<LeadsPage />} />
           <Route path="customers" element={<CustomersPage />} />
           <Route path="customers/:id" element={<Customer360Page />} />
