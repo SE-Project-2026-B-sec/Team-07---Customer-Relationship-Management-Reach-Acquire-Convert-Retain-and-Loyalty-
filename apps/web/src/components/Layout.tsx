@@ -13,6 +13,7 @@ interface NavItem {
 export const NAV: NavItem[] = [
   { to: '/', label: 'Dashboard' },
   { to: '/campaigns', label: 'Campaigns', roles: ['ADMIN', 'MARKETING'] },
+  { to: '/segments', label: 'Segments', roles: ['ADMIN', 'MARKETING'] },
   { to: '/leads', label: 'Leads', roles: ['ADMIN', 'MARKETING', 'SALES_MANAGER', 'SALES_REP'] },
   { to: '/contacts', label: 'Contacts', roles: ['ADMIN', 'SALES_MANAGER', 'SALES_REP', 'SUPPORT'] },
   { to: '/customers', label: 'Customers', roles: ['ADMIN', 'SALES_MANAGER', 'SUPPORT'] },
