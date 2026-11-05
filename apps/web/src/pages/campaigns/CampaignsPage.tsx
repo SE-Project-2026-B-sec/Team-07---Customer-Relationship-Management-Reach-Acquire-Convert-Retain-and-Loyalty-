@@ -2,12 +2,14 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '../../api/client';
 import { CampaignForm } from './CampaignForm';
+import { CampaignResults, SendCampaignPanel } from './CampaignResults';
 import {
   CAMPAIGN_STATUSES,
   CHANNEL_LABEL,
   EDITABLE_STATUSES,
   formatDate,
   formatRupees,
+  HAS_RESULTS,
   STATUS_LABEL,
   STATUS_STYLE,
   type Campaign,
@@ -17,12 +19,14 @@ import {
 
 const PAGE_SIZE = 20;
 
-/** CRM-18 Campaigns list with create and edit. CRM-19 later adds metrics to this page. */
+/** CRM-18 Campaigns list with create and edit; CRM-19 sending and results. */
 export function CampaignsPage() {
   const [status, setStatus] = useState<CampaignStatus | ''>('');
   const [page, setPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Campaign | null>(null);
+  // CRM-19: one panel at a time, either "send?" or the results.
+  const [panel, setPanel] = useState<{ kind: 'send' | 'results'; campaign: Campaign } | null>(null);
 
   const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
   if (status) params.set('status', status);
@@ -35,8 +39,14 @@ export function CampaignsPage() {
   const totalPages = campaigns.data ? Math.max(1, Math.ceil(campaigns.data.total / PAGE_SIZE)) : 1;
 
   function openForm(campaign: Campaign | null) {
+    setPanel(null);
     setEditing(campaign);
     setShowForm(true);
+  }
+
+  function openPanel(kind: 'send' | 'results', campaign: Campaign) {
+    setShowForm(false);
+    setPanel({ kind, campaign });
   }
 
   return (
@@ -57,6 +67,22 @@ export function CampaignsPage() {
           key={editing?.id ?? 'new'}
           campaign={editing ?? undefined}
           onClose={() => setShowForm(false)}
+        />
+      )}
+
+      {panel?.kind === 'send' && (
+        <SendCampaignPanel
+          key={panel.campaign.id}
+          campaign={panel.campaign}
+          onClose={() => setPanel(null)}
+          onSent={() => setPanel({ kind: 'results', campaign: panel.campaign })}
+        />
+      )}
+      {panel?.kind === 'results' && (
+        <CampaignResults
+          key={panel.campaign.id}
+          campaign={panel.campaign}
+          onClose={() => setPanel(null)}
         />
       )}
 
@@ -132,18 +158,46 @@ export function CampaignsPage() {
                   </span>
                 </td>
                 <td className="px-3 py-2">
-                  {EDITABLE_STATUSES.includes(c.status) ? (
-                    <button
-                      type="button"
-                      aria-label={`Edit ${c.name}`}
-                      onClick={() => openForm(c)}
-                      className="rounded border border-slate-300 px-3 py-1 text-xs"
-                    >
-                      Edit
-                    </button>
-                  ) : (
-                    <span className="text-xs text-slate-500">Locked</span>
-                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {EDITABLE_STATUSES.includes(c.status) ? (
+                      <>
+                        <button
+                          type="button"
+                          aria-label={`Edit ${c.name}`}
+                          onClick={() => openForm(c)}
+                          className="rounded border border-slate-300 px-3 py-1 text-xs"
+                        >
+                          Edit
+                        </button>
+                        {c.segmentId ? (
+                          <button
+                            type="button"
+                            aria-label={`Send ${c.name}`}
+                            onClick={() => openPanel('send', c)}
+                            className="rounded bg-blue-700 px-3 py-1 text-xs text-white"
+                          >
+                            Send
+                          </button>
+                        ) : (
+                          <span className="self-center text-xs text-slate-500">
+                            Add a segment to send
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="self-center text-xs text-slate-500">Locked</span>
+                    )}
+                    {HAS_RESULTS.includes(c.status) && (
+                      <button
+                        type="button"
+                        aria-label={`Results for ${c.name}`}
+                        onClick={() => openPanel('results', c)}
+                        className="rounded border border-slate-300 px-3 py-1 text-xs"
+                      >
+                        Results
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
