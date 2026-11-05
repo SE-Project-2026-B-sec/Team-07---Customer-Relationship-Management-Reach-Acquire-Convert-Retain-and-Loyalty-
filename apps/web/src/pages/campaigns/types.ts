@@ -74,3 +74,21 @@ export const formatDate = (iso: string) =>
   });
 
 export const dateInputValue = (iso: string) => iso.slice(0, 10);
+
+/** CRM-19: GET /campaigns/:id/metrics */
+export interface CampaignMetrics {
+  campaignId: string;
+  status: CampaignStatus;
+  sentAt: string | null;
+  recipients: number;
+  opens: number;
+  clicks: number;
+  leads: number;
+  openRate: number;
+  clickRate: number;
+  budget: number;
+  costPerLead: number | null;
+}
+
+/** Campaigns that have been sent, or may have been, so have results to show. */
+export const HAS_RESULTS: CampaignStatus[] = ['RUNNING', 'COMPLETED', 'ARCHIVED'];
