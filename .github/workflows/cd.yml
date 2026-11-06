@@ -98,7 +98,7 @@ jobs:
           echo "Timed out waiting for new live deployment" && exit 1
 
       # -------------------------------------------------
-      # 4️⃣ Smoke‑test the health endpoint (must return HTTP 200 and {"ok":true})
+      # 4️⃣ Smoke‑test the health endpoint (must return HTTP 200 and {"status":"ok"})
       # -------------------------------------------------
       - name: Smoke test GET /api/v1/health
         id: smoke
@@ -107,7 +107,7 @@ jobs:
           # API_BASE_URL already ends with /api/v1
           for i in $(seq 1 10); do
             if RESPONSE=$(curl -fsS "${API_BASE_URL}/health"); then
-              if echo "$RESPONSE" | jq -e '.ok == true' > /dev/null; then
+              if echo "$RESPONSE" | jq -e '.status == "ok"' > /dev/null; then
                 echo "API is healthy"
                 exit 0
               fi
