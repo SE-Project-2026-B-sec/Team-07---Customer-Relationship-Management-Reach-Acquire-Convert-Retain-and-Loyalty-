@@ -6,6 +6,8 @@ import { ExportCsvButton } from '../../components/ExportCsvButton';
 import { useOptionalAuth, type Role } from '../../auth/AuthContext';
 import { ImportLeads } from './ImportLeads';
 import { NewLeadForm } from './NewLeadForm';
+import { ScoreBadge } from './ScoreBadge';
+import { ScoringRulesPanel } from './ScoringRulesPanel';
 import {
   LEAD_STATUSES,
   SOURCE_LABEL,
@@ -17,10 +19,12 @@ import {
 
 const PAGE_SIZE = 20;
 const IMPORT_ROLES: Role[] = ['ADMIN', 'MARKETING', 'SALES_MANAGER'];
+/** CRM-20: who may change the lead scoring rules. */
+const SCORING_ROLES: Role[] = ['ADMIN', 'SALES_MANAGER'];
 /**
  * CRM-8 Leads list. Later stories add to this page:
  * CRM-9 (Dhriti) an "Import CSV" button, CRM-10 (Disha) assign checkboxes,
- * CRM-13 (Disha) a "Convert" button on qualified leads.
+ * CRM-13 (Disha) a "Convert" button on qualified leads, CRM-20 (Balla) scores and scoring rules.
  */
 export function LeadsPage() {
   const [search, setSearch] = useState('');
@@ -30,8 +34,11 @@ export function LeadsPage() {
   const [page, setPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [sort, setSort] = useState<'newest' | 'score'>('newest');
+  const [showScoring, setShowScoring] = useState(false);
   const role = useOptionalAuth()?.user?.role;
   const canImport = role !== undefined && IMPORT_ROLES.includes(role);
+  const canEditScoring = role !== undefined && SCORING_ROLES.includes(role);
 
   // Wait until typing pauses before searching.
   useEffect(() => {
@@ -46,6 +53,7 @@ export function LeadsPage() {
   if (q) params.set('q', q);
   if (status) params.set('status', status);
   if (duplicatesOnly) params.set('duplicates', 'true');
+  if (sort === 'score') params.set('sort', 'score');
 
   const leads = useQuery({
     queryKey: ['leads', params.toString()],
@@ -67,6 +75,15 @@ export function LeadsPage() {
           >
             Open website form
           </Link>
+          {canEditScoring && (
+            <button
+              type="button"
+              onClick={() => setShowScoring(true)}
+              className="rounded border border-slate-300 px-4 py-2 text-sm"
+            >
+              Scoring rules
+            </button>
+          )}
           {canImport && (
             <button
               type="button"
@@ -88,6 +105,7 @@ export function LeadsPage() {
 
       {showForm && <NewLeadForm onClose={() => setShowForm(false)} />}
       {showImport && <ImportLeads onClose={() => setShowImport(false)} />}
+      {showScoring && <ScoringRulesPanel onClose={() => setShowScoring(false)} />}
 
       <div className="mt-4 flex flex-wrap items-end gap-3">
         <label className="text-sm">
@@ -129,6 +147,20 @@ export function LeadsPage() {
           />
           Duplicates only
         </label>
+        <label className="text-sm">
+          Sort by
+          <select
+            value={sort}
+            onChange={(e) => {
+              setSort(e.target.value as 'newest' | 'score');
+              setPage(1);
+            }}
+            className="mt-1 block rounded border px-3 py-2"
+          >
+            <option value="newest">Newest first</option>
+            <option value="score">Highest score</option>
+          </select>
+        </label>
       </div>
 
       {leads.isError && (
@@ -138,7 +170,7 @@ export function LeadsPage() {
       )}
 
       <div className="mt-4 relative overflow-x-auto rounded border border-slate-200 bg-white">
-        <table className="w-full min-w-[640px] text-left text-sm">
+        <table className="w-full min-w-[720px] text-left text-sm">
           <thead className="bg-slate-50 text-slate-600">
             <tr>
               <th className="px-3 py-2 font-medium">Name</th>
@@ -146,20 +178,21 @@ export function LeadsPage() {
               <th className="px-3 py-2 font-medium">Company</th>
               <th className="px-3 py-2 font-medium">Source</th>
               <th className="px-3 py-2 font-medium">Status</th>
+              <th className="px-3 py-2 font-medium">Score</th>
               <th className="px-3 py-2 font-medium">Owner</th>
             </tr>
           </thead>
           <tbody>
             {leads.isLoading && (
               <tr>
-                <td colSpan={6} className="px-3 py-4 text-slate-500">
+                <td colSpan={7} className="px-3 py-4 text-slate-500">
                   Loading…
                 </td>
               </tr>
             )}
             {leads.data?.data.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-3 py-4 text-slate-500">
+                <td colSpan={7} className="px-3 py-4 text-slate-500">
                   No leads found.
                 </td>
               </tr>
@@ -184,6 +217,9 @@ export function LeadsPage() {
                   <span className={`rounded px-2 py-0.5 text-xs ${STATUS_STYLE[lead.status]}`}>
                     {STATUS_LABEL[lead.status]}
                   </span>
+                </td>
+                <td className="px-3 py-2">
+                  <ScoreBadge score={lead.score} />
                 </td>
                 <td className="px-3 py-2 text-slate-700">{lead.ownerName ?? 'Unassigned'}</td>
               </tr>

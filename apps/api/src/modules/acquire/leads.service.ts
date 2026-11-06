@@ -2,6 +2,7 @@ import type { Prisma } from '@prisma/client';
 import { AppError } from '../../common/errors';
 import { paged, toSkipTake } from '../../common/pagination';
 import { assertCanModify, type AuthUser, ownedBy } from '../auth';
+import { rescoreLead, scoreNewLead } from './lead-scoring.service';
 import { type LeadRow, leadsRepository as repo } from './leads.repository';
 import type {
   CreateLeadInput,
@@ -55,6 +56,13 @@ export async function createLead(input: NewLead): Promise<LeadDto> {
   const email = input.email.trim().toLowerCase();
   const campaignId =
     input.campaignId && (await repo.campaignExists(input.campaignId)) ? input.campaignId : null;
+  const score = await scoreNewLead({
+    source: input.source,
+    status: 'NEW',
+    phone: input.phone || null,
+    company: input.company || null,
+    campaignId,
+  });
   const lead = await repo.create({
     name: input.name.trim(),
     email,
@@ -64,6 +72,7 @@ export async function createLead(input: NewLead): Promise<LeadDto> {
     campaignId,
     ownerId: input.ownerId ?? null,
     isDuplicate: await repo.emailExists(email),
+    score,
   });
   return toDto(lead);
 }
@@ -92,7 +101,7 @@ export const leadsService = {
           }
         : {}),
     };
-    const { rows, total } = await repo.list(where, toSkipTake(query));
+    const { rows, total } = await repo.list(where, toSkipTake(query), query.sort);
     return paged(rows.map(toDto), total, query);
   },
 
@@ -125,6 +134,8 @@ export const leadsService = {
         ? { email, isDuplicate: await repo.emailExists(email, id) }
         : {}),
     });
-    return toDto(lead);
+    // CRM-20: phone, company or status may have changed the score.
+    const score = await rescoreLead(id);
+    return toDto(score === null ? lead : { ...lead, score });
   },
 };
