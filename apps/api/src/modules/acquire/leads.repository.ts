@@ -9,12 +9,21 @@ export const leadInclude = {
 export type LeadRow = Prisma.LeadGetPayload<{ include: typeof leadInclude }>;
 
 export const leadsRepository = {
-  async list(where: Prisma.LeadWhereInput, page: { skip: number; take: number }) {
+  async list(
+    where: Prisma.LeadWhereInput,
+    page: { skip: number; take: number },
+    sort: 'newest' | 'score' = 'newest',
+  ) {
+    // CRM-20: "score" puts the hottest leads first.
+    const orderBy: Prisma.LeadOrderByWithRelationInput[] =
+      sort === 'score'
+        ? [{ score: 'desc' }, { createdAt: 'desc' }, { id: 'asc' }]
+        : [{ createdAt: 'desc' }, { id: 'asc' }];
     const [rows, total] = await prisma.$transaction([
       prisma.lead.findMany({
         where,
         include: leadInclude,
-        orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+        orderBy,
         ...page,
       }),
       prisma.lead.count({ where }),

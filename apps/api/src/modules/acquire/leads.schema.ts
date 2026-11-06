@@ -58,6 +58,7 @@ export const listLeadsQuery = paginationQuery.extend({
   status: z.nativeEnum(LeadStatus).optional(),
   source: z.enum(LEAD_SOURCES).optional(),
   duplicates: z.enum(['true', 'false']).optional(),
+  sort: z.enum(['newest', 'score']).default('newest'),
 });
 
 export type PublicLeadInput = z.infer<typeof publicLeadSchema>;

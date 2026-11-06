@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { leadsRouter } from './leads.router';
+import { leadScoringRouter } from './lead-scoring.router';
 import { leadAssignmentRouter } from './lead-assignment.router';
 import { leadsImportRouter } from './leads-import.router';
 
@@ -14,7 +15,10 @@ import { leadsImportRouter } from './leads-import.router';
  */
 export const acquireRouter = Router();
 acquireRouter.use(leadsRouter);
+acquireRouter.use(leadScoringRouter); // CRM-20
 acquireRouter.use(leadsImportRouter);
 
 export { createLead } from './leads.service';
+/** CRM-20: re-score a lead after something about it changes (e.g. an activity is logged). */
+export { rescoreLead } from './lead-scoring.service';
 acquireRouter.use('/leads', leadAssignmentRouter); // CRM-10

@@ -8,6 +8,7 @@ import type {
   UpdateActivityInput,
 } from './activities.schema';
 import type { Actor } from './deals.service';
+import { rescoreLead } from '../acquire/lead-scoring.service';
 
 /** A Sales Rep sees what they logged, plus anything on a lead, contact or deal they own. */
 function visibleTo(actor: Actor): Prisma.ActivityWhereInput {
@@ -86,6 +87,8 @@ export const activitiesService = {
       dealId: input.dealId,
       userId: actor.id,
     });
+    // CRM-20: logging a call or meeting on a lead counts as engagement and can raise its score.
+    if (input.leadId) await rescoreLead(input.leadId);
     return toDto(row);
   },
 
