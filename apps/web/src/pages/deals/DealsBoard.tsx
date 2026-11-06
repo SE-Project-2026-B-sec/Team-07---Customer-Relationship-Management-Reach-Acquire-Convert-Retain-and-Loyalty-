@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { api } from '../../api/client';
 import { ExportCsvButton } from '../../components/ExportCsvButton';
 import { ActivitiesPanel } from '../../components/activities/ActivitiesPanel';
+import { QuotePanel } from './QuotePanel';
 import { NewDealForm } from './NewDealForm';
 import {
   STAGES,
@@ -31,9 +32,10 @@ interface DealCardProps {
   deal: Deal;
   onMove: (id: string, stage: Stage) => void;
   onShowActivities: (deal: Deal) => void;
+  onShowQuotes: (deal: Deal) => void;
 }
 
-function DealCard({ deal, onMove, onShowActivities }: DealCardProps) {
+function DealCard({ deal, onMove, onShowActivities, onShowQuotes }: DealCardProps) {
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, isDragging } =
     useDraggable({ id: deal.id });
   const style = transform
@@ -87,14 +89,25 @@ function DealCard({ deal, onMove, onShowActivities }: DealCardProps) {
           ))}
         </select>
       </div>
-      <button
-        type="button"
-        onClick={() => onShowActivities(deal)}
-        aria-label={`Activities for ${deal.title}`}
-        className="mt-2 text-xs font-medium text-blue-800 underline"
-      >
-        Activities
-      </button>
+      <div className="mt-2 flex gap-3">
+        <button
+          type="button"
+          onClick={() => onShowActivities(deal)}
+          aria-label={`Activities for ${deal.title}`}
+          className="text-xs font-medium text-blue-800 underline"
+        >
+          Activities
+        </button>
+        {/* CRM-30 */}
+        <button
+          type="button"
+          onClick={() => onShowQuotes(deal)}
+          aria-label={`Quotes for ${deal.title}`}
+          className="text-xs font-medium text-blue-800 underline"
+        >
+          Quote
+        </button>
+      </div>
     </article>
   );
 }
@@ -104,9 +117,10 @@ interface ColumnProps {
   deals: Deal[];
   onMove: (id: string, stage: Stage) => void;
   onShowActivities: (deal: Deal) => void;
+  onShowQuotes: (deal: Deal) => void;
 }
 
-function Column({ stage, deals, onMove, onShowActivities }: ColumnProps) {
+function Column({ stage, deals, onMove, onShowActivities, onShowQuotes }: ColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
   const total = deals.reduce((sum, d) => sum + d.value, 0);
 
@@ -128,7 +142,13 @@ function Column({ stage, deals, onMove, onShowActivities }: ColumnProps) {
       </header>
       <div className="flex min-h-16 flex-col gap-2">
         {deals.map((d) => (
-          <DealCard key={d.id} deal={d} onMove={onMove} onShowActivities={onShowActivities} />
+          <DealCard
+            key={d.id}
+            deal={d}
+            onMove={onMove}
+            onShowActivities={onShowActivities}
+            onShowQuotes={onShowQuotes}
+          />
         ))}
       </div>
     </section>
@@ -140,6 +160,17 @@ export function DealsBoard() {
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [activitiesFor, setActivitiesFor] = useState<Deal | null>(null);
+  const [quotesFor, setQuotesFor] = useState<Deal | null>(null);
+
+  // One panel under the board at a time.
+  const showActivities = (deal: Deal) => {
+    setQuotesFor(null);
+    setActivitiesFor(deal);
+  };
+  const showQuotes = (deal: Deal) => {
+    setActivitiesFor(null);
+    setQuotesFor(deal);
+  };
 
   const deals = useQuery({
     queryKey: DEALS_KEY,
@@ -240,7 +271,8 @@ export function DealsBoard() {
                 stage={stage}
                 deals={list.filter((d) => d.stage === stage)}
                 onMove={moveDeal}
-                onShowActivities={setActivitiesFor}
+                onShowActivities={showActivities}
+                onShowQuotes={showQuotes}
               />
             ))}
           </div>
@@ -266,6 +298,10 @@ export function DealsBoard() {
           </div>
           <ActivitiesPanel key={activitiesFor.id} link={{ dealId: activitiesFor.id }} />
         </section>
+      )}
+
+      {quotesFor && (
+        <QuotePanel key={quotesFor.id} deal={quotesFor} onClose={() => setQuotesFor(null)} />
       )}
     </div>
   );
