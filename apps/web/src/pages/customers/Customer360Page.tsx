@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api, ApiError } from '../../api/client';
 import { ActivitiesPanel } from '../../components/activities/ActivitiesPanel';
+import { ReferralsSection } from './ReferralsSection';
 import {
   formatDate,
   formatDateTime,
@@ -189,6 +190,8 @@ export function Customer360Page() {
               </p>
             )}
           </section>
+
+          <ReferralsSection contactId={id} />
 
           <section aria-label="Log an activity" className="mt-6">
             <h2 className="text-lg font-semibold text-slate-900">Log an activity</h2>

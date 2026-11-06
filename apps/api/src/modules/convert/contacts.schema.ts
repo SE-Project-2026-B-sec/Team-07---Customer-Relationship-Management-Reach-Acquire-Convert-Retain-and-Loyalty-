@@ -31,12 +31,16 @@ const contactFields = {
   accountId: z.string().min(1).nullable(),
 };
 
+// CRM-27: the referral code of the customer who referred this one (optional).
+export const referredByCode = z.string().trim().min(3).max(20).optional();
+
 // POST /contacts
 export const createContactBody = z.object({
   ...contactFields,
   tags: contactFields.tags.default([]),
   marketingConsent: contactFields.marketingConsent.default(false),
   accountId: contactFields.accountId.optional(),
+  referredByCode,
 });
 export type CreateContactBody = z.infer<typeof createContactBody>;
 
