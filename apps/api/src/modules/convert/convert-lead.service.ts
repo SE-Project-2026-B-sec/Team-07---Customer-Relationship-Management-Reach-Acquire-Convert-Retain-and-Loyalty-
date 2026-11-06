@@ -4,6 +4,7 @@
 import crypto from 'crypto';
 import { AppError } from '../../common/errors';
 import { prisma } from '../../common/prisma';
+import { recordReferral } from '../loyalty';
 import type { CurrentUser } from './contacts.service';
 import type { ConvertLeadBody } from './convert-lead.schema';
 
@@ -59,6 +60,14 @@ export const convertLeadService = {
         await tx.contact.update({ where: { id: existing.id }, data: { accountId } });
       }
 
+      // 3b'. CRM-27: a brand-new customer who came with a referral code earns their
+      //      referrer the bonus. An existing customer is not new, so no bonus.
+      let referral: { referrerName: string; bonus: number } | null = null;
+      if (body.referredByCode && !existing) {
+        const r = await recordReferral(tx, body.referredByCode, contact.id);
+        referral = { referrerName: r.referrerName, bonus: r.bonus };
+      }
+
       // 3c. Deal (optional), starting in PROSPECTING.
       let dealId: string | null = null;
       if (body.createDeal) {
@@ -89,7 +98,7 @@ export const convertLeadService = {
         throw new AppError(409, 'LEAD_NOT_QUALIFIED', 'This lead was already converted');
       }
 
-      return { contactId: contact.id, accountId, dealId };
+      return { contactId: contact.id, accountId, dealId, referral };
     });
   },
 };

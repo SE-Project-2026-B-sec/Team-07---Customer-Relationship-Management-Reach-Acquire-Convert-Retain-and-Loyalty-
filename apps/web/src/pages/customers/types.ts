@@ -119,3 +119,19 @@ export const formatDateTime = (iso: string) =>
 
 export const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-IN', { dateStyle: 'medium' });
+
+/** CRM-27: GET /customers/:id/referrals */
+export interface CustomerReferrals {
+  contactId: string;
+  referralCode: string;
+  bonusPerReferral: number;
+  bonusEarned: number;
+  referredBy: { id: string; name: string; referredAt: string } | null;
+  referrals: {
+    id: string;
+    customerId: string;
+    customerName: string;
+    bonusAwarded: boolean;
+    referredAt: string;
+  }[];
+}

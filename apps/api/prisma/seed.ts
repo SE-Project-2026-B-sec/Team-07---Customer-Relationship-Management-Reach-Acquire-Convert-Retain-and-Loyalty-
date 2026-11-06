@@ -343,6 +343,49 @@ async function main() {
     }
   }
 
+  // CRM-27: the first customer referred the 3 converted customers, earning a referral bonus
+  // (100 points, the default REFERRAL_BONUS_POINTS) for each one.
+  const referrer = contacts[0];
+  const converted = await prisma.contact.findMany({
+    where: { referralCode: { startsWith: 'CONV' } },
+    orderBy: { referralCode: 'asc' },
+  });
+  let refBalance =
+    (
+      await prisma.pointsLedger.findFirst({
+        where: { contactId: referrer.id },
+        orderBy: [{ createdAt: 'desc' }, { balanceAfter: 'desc' }],
+      })
+    )?.balanceAfter ?? 0;
+  for (const friend of converted) {
+    await prisma.referral.create({
+      data: { referrerId: referrer.id, refereeId: friend.id, bonusAwarded: true },
+    });
+    refBalance += 100;
+    await prisma.pointsLedger.create({
+      data: { contactId: referrer.id, delta: 100, reason: 'REFERRAL', balanceAfter: refBalance },
+    });
+  }
+  const refLifetime =
+    (
+      await prisma.pointsLedger.aggregate({
+        where: { contactId: referrer.id, delta: { gt: 0 } },
+        _sum: { delta: true },
+      })
+    )._sum.delta ?? 0;
+  const refTier: TierName =
+    refLifetime >= 4000
+      ? 'PLATINUM'
+      : refLifetime >= 1500
+        ? 'GOLD'
+        : refLifetime >= 500
+          ? 'SILVER'
+          : 'BRONZE';
+  await prisma.contact.update({ where: { id: referrer.id }, data: { tier: refTier } });
+  console.log(
+    `Referrals: ${referrer.name} (${referrer.referralCode}) referred ${converted.length} customers.`,
+  );
+
   console.log(`Done. Log in with any @crm.test account using password "${password}".`);
 }
 

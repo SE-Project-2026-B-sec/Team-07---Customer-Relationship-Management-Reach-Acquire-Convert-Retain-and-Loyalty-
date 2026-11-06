@@ -6,6 +6,8 @@
 import crypto from 'crypto';
 import { Prisma } from '@prisma/client';
 import { AppError } from '../../common/errors';
+import { prisma } from '../../common/prisma';
+import { recordReferral } from '../loyalty';
 import { contactsRepository as repo } from './contacts.repository';
 import type { CreateContactBody, ListContactsQuery, UpdateContactBody } from './contacts.schema';
 
@@ -73,11 +75,15 @@ export const contactsService = {
 
   async create(user: CurrentUser, body: CreateContactBody) {
     await assertEmailFree(body.email);
+    const { referredByCode, ...fields } = body;
     try {
-      return await repo.create({
-        ...body,
-        ownerId: user.id,
-        referralCode: await newReferralCode(),
+      const data = { ...fields, ownerId: user.id, referralCode: await newReferralCode() };
+      if (!referredByCode) return await repo.create(data);
+      // CRM-27: create the customer and give the referrer their bonus together, or neither.
+      return await prisma.$transaction(async (tx) => {
+        const contact = await tx.contact.create({ data, include: { account: true } });
+        await recordReferral(tx, referredByCode, contact.id);
+        return contact;
       });
     } catch (err) {
       // Two requests racing past assertEmailFree: the database unique index catches it.

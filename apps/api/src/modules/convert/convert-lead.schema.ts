@@ -1,5 +1,6 @@
 // CRM-13 (CRM-F-032): request body for POST /leads/:id/convert.
 import { z } from 'zod';
+import { referredByCode } from './contacts.schema';
 
 export const convertLeadBody = z
   .object({
@@ -10,6 +11,8 @@ export const convertLeadBody = z
     // Not limited to >= 0 here on purpose: the service rejects a negative value
     // INSIDE the transaction, which is how TC-CONV-06 proves the rollback works.
     dealValue: z.number().optional(),
+    // CRM-27: used only when conversion creates a new customer.
+    referredByCode,
   })
   .refine((b) => b.accountId || b.accountName, {
     message: 'Pick an existing account or enter a new account name',
