@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { ordersRouter, pointsRouter } from './orders.router';
+import { redemptionsRouter, rewardsRouter } from './rewards.router';
 import { tiersRouter } from './tiers.router';
 
 /**
@@ -17,3 +18,7 @@ loyaltyRouter.use('/customers', pointsRouter);
 
 // CRM-25
 loyaltyRouter.use('/tiers', tiersRouter);
+
+// CRM-26
+loyaltyRouter.use('/rewards', rewardsRouter);
+loyaltyRouter.use('/customers', redemptionsRouter);
