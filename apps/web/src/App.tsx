@@ -14,6 +14,7 @@ import { CampaignsPage } from './pages/campaigns/CampaignsPage';
 import { SegmentsPage } from './pages/segments/SegmentsPage';
 import { Customer360Page } from './pages/customers/Customer360Page';
 import { CustomersPage } from './pages/customers/CustomersPage';
+import { ContactsPage } from './pages/contacts/ContactsPage';
 
 export function App() {
   return (
@@ -28,10 +29,7 @@ export function App() {
           <Route path="leads" element={<LeadsPage />} />
           <Route path="customers" element={<CustomersPage />} />
           <Route path="customers/:id" element={<Customer360Page />} />
-          <Route
-            path="contacts"
-            element={<Placeholder title="Contacts" owner="Disha" stories="CRM-11, 13" />}
-          />
+          <Route path="contacts" element={<ContactsPage />} />
           <Route
             path="accounts"
             element={<Placeholder title="Accounts" owner="Disha" stories="CRM-11" />}
