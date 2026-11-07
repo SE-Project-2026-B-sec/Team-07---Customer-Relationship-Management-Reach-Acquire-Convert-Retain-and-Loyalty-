@@ -152,3 +152,7 @@ Name tests after the Test Plan IDs, e.g. `it('TC-CONV-05 converts a qualified le
 | `npm run build`                             | Production build of web and API       |
 | `npm run seed --workspace apps/api`         | Reset the database to the demo data   |
 | `npx prisma studio` (in `apps/api`)         | Browse the database in your browser   |
+
+## Demo video
+
+https://drive.google.com/file/d/10v-RdQ3F_61XaTvyvyuB09QEID2zvGDy/view?usp=sharing

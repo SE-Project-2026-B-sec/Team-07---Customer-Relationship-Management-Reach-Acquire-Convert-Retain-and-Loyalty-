@@ -31,3 +31,7 @@ Customer Relationship Management covering Reach → Acquire → Convert → Reta
 ## Run it
 
 See `README.md` section 1.
+
+## Demo video
+
+https://drive.google.com/file/d/10v-RdQ3F_61XaTvyvyuB09QEID2zvGDy/view?usp=drive_link
