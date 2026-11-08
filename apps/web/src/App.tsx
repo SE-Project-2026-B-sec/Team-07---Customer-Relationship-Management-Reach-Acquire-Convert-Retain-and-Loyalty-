@@ -3,7 +3,6 @@ import { Layout } from './components/Layout';
 import { AuditLogPage } from './pages/audit/AuditLogPage';
 import { Dashboard } from './pages/Dashboard';
 import { Login } from './pages/Login';
-import { Placeholder } from './pages/Placeholder';
 import { RequireAuth } from './components/RequireAuth';
 import { DealsBoard } from './pages/deals/DealsBoard';
 import { EnquiryForm } from './pages/EnquiryForm';
@@ -14,6 +13,10 @@ import { CampaignsPage } from './pages/campaigns/CampaignsPage';
 import { SegmentsPage } from './pages/segments/SegmentsPage';
 import { Customer360Page } from './pages/customers/Customer360Page';
 import { CustomersPage } from './pages/customers/CustomersPage';
+import { AccountsPage } from './pages/accounts/AccountsPage';
+import { LoyaltyPage } from './pages/loyalty/LoyaltyPage';
+import { AdminUsersPage } from './pages/admin/AdminUsersPage';
+import { ContactsPage } from './pages/contacts/ContactsPage';
 
 export function App() {
   return (
@@ -28,29 +31,15 @@ export function App() {
           <Route path="leads" element={<LeadsPage />} />
           <Route path="customers" element={<CustomersPage />} />
           <Route path="customers/:id" element={<Customer360Page />} />
-          <Route
-            path="contacts"
-            element={<Placeholder title="Contacts" owner="Disha" stories="CRM-11, 13" />}
-          />
-          <Route
-            path="accounts"
-            element={<Placeholder title="Accounts" owner="Disha" stories="CRM-11" />}
-          />
+          <Route path="contacts" element={<ContactsPage />} />
+          <Route path="accounts" element={<AccountsPage />} />
           <Route path="deals" element={<DealsBoard />} />
 
           <Route path="tickets" element={<TicketsPage />} />
-          <Route
-            path="loyalty"
-            element={
-              <Placeholder title="Loyalty" owner="Disha / Balla" stories="CRM-24, 25, 26, 27" />
-            }
-          />
+          <Route path="loyalty" element={<LoyaltyPage />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="audit-log" element={<AuditLogPage />} />
-          <Route
-            path="admin"
-            element={<Placeholder title="Admin" owner="Disha" stories="CRM-6" />}
-          />
+          <Route path="admin" element={<AdminUsersPage />} />
         </Route>
       </Route>
     </Routes>
