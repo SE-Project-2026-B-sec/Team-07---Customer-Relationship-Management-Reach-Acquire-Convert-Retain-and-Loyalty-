@@ -1,7 +1,10 @@
-# CRM-3: deploys the API to Render after CI passes on main, then smoke-tests it.
-# The web app deploys itself through Vercel's GitHub integration (no job needed here).
-# Repo secrets needed: RENDER_DEPLOY_HOOK, RENDER_API_KEY, RENDER_SERVICE_ID, API_BASE_URL
-# API_BASE_URL should be e.g. https://your-app.onrender.com/api/v1
+# CRM-3: after CI passes on main, deploys the API to Render and the web app to Vercel,
+# then smoke-tests both.
+# Repo secrets for the API: RENDER_DEPLOY_HOOK, RENDER_API_KEY, RENDER_SERVICE_ID, API_BASE_URL
+#   (API_BASE_URL should be e.g. https://your-app.onrender.com/api/v1)
+# Repo secrets for the web app: VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID
+#   (deploy-web is skipped with a warning until all three are added)
+# Optional repo variable: WEB_URL (production web address used by the web smoke test)
 name: CD
 
 on:
@@ -132,3 +135,74 @@ jobs:
             -d "{\"deployId\":\"${{ steps.previous.outputs.id }}\"}" \
             "https://api.render.com/v1/services/$SERVICE_ID/rollback"
           echo "Rolled back to ${{ steps.previous.outputs.id }}"
+
+  # ---------------------------------------------------------------------------
+  # Web app -> Vercel. Deploying from CI with the Vercel CLI means a merge by any
+  # teammate reaches production (Vercel's Hobby Git integration only deploys
+  # commits made by the Vercel project owner).
+  # ---------------------------------------------------------------------------
+  deploy-web:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      WEB_URL: ${{ vars.WEB_URL || 'https://team-07-customer-relationship-manag.vercel.app' }}
+    steps:
+      - name: Check Vercel secrets
+        id: secrets
+        run: |
+          if [ -n "$VERCEL_TOKEN" ] && [ -n "$VERCEL_ORG_ID" ] && [ -n "$VERCEL_PROJECT_ID" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Web deploy skipped: add VERCEL_TOKEN, VERCEL_ORG_ID and VERCEL_PROJECT_ID repo secrets."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Deploy exactly the commit that passed CI.
+      - uses: actions/checkout@v4
+        if: steps.secrets.outputs.ready == 'true'
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - uses: actions/setup-node@v4
+        if: steps.secrets.outputs.ready == 'true'
+        with:
+          node-version: 20
+
+      - name: Install the Vercel CLI
+        if: steps.secrets.outputs.ready == 'true'
+        run: npm install --global vercel@65.14.0
+
+      # Pulls the project's settings (root directory, build command) and its
+      # production environment variables, e.g. VITE_API_URL.
+      - name: Pull Vercel project settings
+        if: steps.secrets.outputs.ready == 'true'
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+
+      - name: Build
+        if: steps.secrets.outputs.ready == 'true'
+        run: vercel build --prod --token="$VERCEL_TOKEN"
+
+      - name: Deploy to production
+        if: steps.secrets.outputs.ready == 'true'
+        run: |
+          url=$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")
+          echo "Deployed: $url"
+
+      # The production address must serve the CRM app (page title CRM-RACRL).
+      - name: Smoke test the web app
+        if: steps.secrets.outputs.ready == 'true'
+        run: |
+          set -euo pipefail
+          # /login also proves apps/web/vercel.json sends app routes to index.html.
+          for _ in $(seq 1 10); do
+            if curl -fsS "$WEB_URL/login" | grep -q '<title>CRM-RACRL</title>'; then
+              echo "Web app is live at $WEB_URL"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::$WEB_URL did not serve the CRM app" && exit 1
