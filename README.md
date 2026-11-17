@@ -156,3 +156,43 @@ Name tests after the Test Plan IDs, e.g. `it('TC-CONV-05 converts a qualified le
 ## Demo video
 
 https://drive.google.com/file/d/10v-RdQ3F_61XaTvyvyuB09QEID2zvGDy/view?usp=sharing
+
+## Scrum evidence (Jira)
+
+Screenshots from our Jira project, in `docs/screenshots/`.
+
+### Jira dashboard
+
+All 33 stories by priority (14 Highest, 7 High, 8 Medium, 4 Low) and by owner (Diya 9, Santhosh 9, Disha 8, Dhriti 7).
+
+![Jira dashboard](docs/screenshots/01-jira-dashboard.png)
+
+### Product backlog
+
+All 33 stories with their owner, priority and status.
+
+![Product backlog, part 1](docs/screenshots/02-product-backlog-1.jpg)
+![Product backlog, part 2](docs/screenshots/02-product-backlog-2.jpg)
+
+### Sprint backlogs
+
+**CRM Sprint 1** (29 Oct – 1 Nov): 16 stories, 53 story points, all done.
+
+![Sprint 1 backlog](docs/screenshots/03-sprint1-backlog.png)
+
+**CRM Sprint 2** (2 – 7 Nov): 17 stories, 54 story points, all done.
+
+![Sprint 2 backlog](docs/screenshots/04-sprint2-backlog.png)
+
+### Sprint progress (velocity)
+
+Committed vs completed story points per sprint: 53 / 53 and 54 / 54. The first bar, "Setup - started by mistake", is a sprint opened by mistake during setup and closed with no work in it (deviation D3 in `docs/deviation-log.md`).
+
+![Velocity: committed vs completed](docs/screenshots/05-sprint-progress-velocity.png)
+
+### Burndown charts
+
+![Sprint 1 burndown](docs/screenshots/06-burndown-sprint1.jpg)
+![Sprint 2 burndown](docs/screenshots/07-burndown-sprint2.jpg)
+
+The red line drops when a story's pull request is merged, because a story counted as Done only after its PR was reviewed and merged. Jira's grey guideline treats weekends as non-working days.
